@@ -1,0 +1,334 @@
+import type { Express, Request, Response } from "express";
+import express from "express";
+import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
+import { storage } from "./storage";
+import { setupAuth, isAuthenticated } from "./replitAuth";
+import { insertMaintenanceRequestSchema, insertAttachmentSchema, insertInviteCodeSchema } from "@shared/schema";
+import multer from "multer";
+import path from "path";
+import { randomUUID } from "crypto";
+
+// Configure multer for file uploads
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, 'uploads/');
+    },
+    filename: (req, file, cb) => {
+      const uniqueName = `${randomUUID()}-${file.originalname}`;
+      cb(null, uniqueName);
+    }
+  }),
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image and video files are allowed'), false);
+    }
+  }
+});
+
+interface AuthenticatedRequest extends Request {
+  user?: {
+    claims: {
+      sub: string;
+      email?: string;
+      first_name?: string;
+      last_name?: string;
+    };
+  };
+}
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Auth middleware
+  await setupAuth(app);
+
+  // Ensure uploads directory exists
+  import('fs').then(fs => {
+    if (!fs.existsSync('uploads')) {
+      fs.mkdirSync('uploads', { recursive: true });
+    }
+  });
+
+  // Serve uploaded files
+  app.use('/uploads', express.static('uploads'));
+
+  // Auth routes
+  app.get('/api/auth/user', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user?.claims.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Buildings routes
+  app.get('/api/buildings', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const user = await storage.getUser(req.user!.claims.sub);
+      if (!user?.tenantId) {
+        return res.status(400).json({ message: "User tenant not found" });
+      }
+
+      const buildings = await storage.getBuildings(user.tenantId);
+      res.json(buildings);
+    } catch (error) {
+      console.error("Error fetching buildings:", error);
+      res.status(500).json({ message: "Failed to fetch buildings" });
+    }
+  });
+
+  // Properties routes
+  app.get('/api/properties', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.claims.sub;
+      const properties = await storage.getPropertiesForUser(userId);
+      res.json(properties);
+    } catch (error) {
+      console.error("Error fetching properties:", error);
+      res.status(500).json({ message: "Failed to fetch properties" });
+    }
+  });
+
+  // Maintenance requests routes
+  app.post('/api/maintenance-requests', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const user = await storage.getUser(req.user!.claims.sub);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const validatedData = insertMaintenanceRequestSchema.parse({
+        ...req.body,
+        tenantId: user.tenantId,
+      });
+
+      const request = await storage.createMaintenanceRequest(validatedData);
+
+      // Add initial timeline entry
+      await storage.addTimelineEntry({
+        requestId: request.id,
+        action: "created",
+        description: "Request created by tenant",
+        userId: user.id,
+        newStatus: "open",
+      });
+
+      res.status(201).json(request);
+    } catch (error) {
+      console.error("Error creating maintenance request:", error);
+      res.status(500).json({ message: "Failed to create maintenance request" });
+    }
+  });
+
+  app.get('/api/maintenance-requests', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const user = await storage.getUser(req.user!.claims.sub);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const filters: any = { tenantId: user.tenantId };
+
+      // Role-based filtering
+      if (user.role === 'tenant') {
+        filters.userId = user.id;
+      } else if (user.role === 'fmc_technician') {
+        filters.assignedTechnicianId = user.id;
+      } else if (user.role === 'fmc_supervisor') {
+        filters.supervisorId = user.id;
+      }
+
+      // Apply query parameters
+      if (req.query.status) {
+        filters.status = req.query.status;
+      }
+      if (req.query.buildingId) {
+        filters.buildingId = req.query.buildingId;
+      }
+      if (req.query.limit) {
+        filters.limit = parseInt(req.query.limit as string);
+      }
+      if (req.query.offset) {
+        filters.offset = parseInt(req.query.offset as string);
+      }
+
+      const requests = await storage.getMaintenanceRequests(filters);
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching maintenance requests:", error);
+      res.status(500).json({ message: "Failed to fetch maintenance requests" });
+    }
+  });
+
+  app.get('/api/maintenance-requests/:id', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const request = await storage.getMaintenanceRequest(req.params.id);
+      if (!request) {
+        return res.status(404).json({ message: "Request not found" });
+      }
+
+      res.json(request);
+    } catch (error) {
+      console.error("Error fetching maintenance request:", error);
+      res.status(500).json({ message: "Failed to fetch maintenance request" });
+    }
+  });
+
+  app.patch('/api/maintenance-requests/:id/status', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { status } = req.body;
+      const userId = req.user!.claims.sub;
+
+      const updated = await storage.updateMaintenanceRequestStatus(req.params.id, status, userId);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating request status:", error);
+      res.status(500).json({ message: "Failed to update request status" });
+    }
+  });
+
+  app.patch('/api/maintenance-requests/:id/assign', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { technicianId } = req.body;
+      const supervisorId = req.user!.claims.sub;
+
+      const updated = await storage.assignTechnician(req.params.id, technicianId, supervisorId);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error assigning technician:", error);
+      res.status(500).json({ message: "Failed to assign technician" });
+    }
+  });
+
+  // File upload routes
+  app.post('/api/maintenance-requests/:id/attachments', isAuthenticated, upload.array('files', 10), async (req: AuthenticatedRequest, res) => {
+    try {
+      const files = req.files as Express.Multer.File[];
+      const userId = req.user!.claims.sub;
+      const requestId = req.params.id;
+      const isBeforePhoto = req.body.isBeforePhoto === 'true';
+
+      if (!files || files.length === 0) {
+        return res.status(400).json({ message: "No files uploaded" });
+      }
+
+      const attachments = [];
+      for (const file of files) {
+        const attachment = await storage.createAttachment({
+          requestId,
+          fileName: file.originalname,
+          fileUrl: `/uploads/${file.filename}`,
+          fileSize: file.size,
+          fileType: file.mimetype,
+          uploadedBy: userId,
+          isBeforePhoto,
+        });
+        attachments.push(attachment);
+      }
+
+      res.json(attachments);
+    } catch (error) {
+      console.error("Error uploading files:", error);
+      res.status(500).json({ message: "Failed to upload files" });
+    }
+  });
+
+  // Dashboard stats routes
+  app.get('/api/stats/tenant', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.claims.sub;
+      const stats = await storage.getTenantStats(userId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching tenant stats:", error);
+      res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  app.get('/api/stats/supervisor', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const user = await storage.getUser(req.user!.claims.sub);
+      if (!user?.tenantId) {
+        return res.status(400).json({ message: "User tenant not found" });
+      }
+
+      const stats = await storage.getSupervisorStats(user.id, user.tenantId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching supervisor stats:", error);
+      res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  app.get('/api/stats/technician', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.claims.sub;
+      const stats = await storage.getTechnicianStats(userId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching technician stats:", error);
+      res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  // Technicians list for assignment
+  app.get('/api/technicians', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const user = await storage.getUser(req.user!.claims.sub);
+      if (!user?.tenantId) {
+        return res.status(400).json({ message: "User tenant not found" });
+      }
+
+      const technicians = await storage.getUsersByRole('fmc_technician', user.tenantId);
+      res.json(technicians);
+    } catch (error) {
+      console.error("Error fetching technicians:", error);
+      res.status(500).json({ message: "Failed to fetch technicians" });
+    }
+  });
+
+  const httpServer = createServer(app);
+
+  // WebSocket server for real-time updates
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+
+  wss.on('connection', (ws) => {
+    console.log('New WebSocket connection');
+
+    ws.on('message', (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        console.log('Received:', data);
+
+        // Echo back for now - implement real-time features later
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'echo', data }));
+        }
+      } catch (error) {
+        console.error('WebSocket message error:', error);
+      }
+    });
+
+    ws.on('close', () => {
+      console.log('WebSocket connection closed');
+    });
+  });
+
+  return httpServer;
+}

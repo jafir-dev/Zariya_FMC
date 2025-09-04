@@ -57,23 +57,29 @@ export default function Navigation() {
               <span className="ml-2 text-xl font-bold text-foreground">Zariya FMC</span>
             </div>
 
-            {/* Role Selector */}
-            <div className="hidden md:block">
-              <Select onValueChange={handleRoleSwitch} defaultValue="tenant">
-                <SelectTrigger className="w-40" data-testid="select-role">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tenant">Tenant View</SelectItem>
-                  {(user?.role === "fmc_supervisor" || user?.role === "fmc_head") && (
-                    <SelectItem value="supervisor">FMC Supervisor</SelectItem>
-                  )}
-                  {user?.role === "fmc_technician" && (
-                    <SelectItem value="technician">Technician</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Role Selector - Only show if user has multiple roles */}
+            {((user?.role === "fmc_supervisor" || user?.role === "fmc_head") || 
+              (user?.role === "fmc_technician")) && (
+              <div className="hidden md:block">
+                <Select onValueChange={handleRoleSwitch} defaultValue={
+                  user?.role === "fmc_supervisor" || user?.role === "fmc_head" ? "supervisor" :
+                  user?.role === "fmc_technician" ? "technician" : "tenant"
+                }>
+                  <SelectTrigger className="w-40" data-testid="select-role">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(user?.role === "fmc_supervisor" || user?.role === "fmc_head") && (
+                      <SelectItem value="supervisor">FMC Supervisor</SelectItem>
+                    )}
+                    {user?.role === "fmc_technician" && (
+                      <SelectItem value="technician">Technician</SelectItem>
+                    )}
+                    <SelectItem value="tenant">Tenant View</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center space-x-4">
@@ -85,9 +91,7 @@ export default function Navigation() {
               data-testid="button-notifications"
             >
               <Bell size={20} />
-              <span className="absolute -top-1 -right-1 h-5 w-5 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center">
-                3
-              </span>
+              {/* Only show notification badge if there are notifications */}
             </Button>
 
             {/* User Menu */}

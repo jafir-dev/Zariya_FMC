@@ -157,7 +157,7 @@ export default function NewRequest() {
                   </SelectTrigger>
                   <SelectContent>
                     {properties.length === 0 ? (
-                      <SelectItem value="" disabled>
+                      <SelectItem value="no-properties" disabled>
                         No properties available
                       </SelectItem>
                     ) : (
@@ -287,7 +287,7 @@ export default function NewRequest() {
                         <SelectValue placeholder="Any time" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Any time</SelectItem>
+                        <SelectItem value="any">Any time</SelectItem>
                         <SelectItem value="morning">Morning (8AM - 12PM)</SelectItem>
                         <SelectItem value="afternoon">Afternoon (12PM - 6PM)</SelectItem>
                         <SelectItem value="evening">Evening (6PM - 8PM)</SelectItem>

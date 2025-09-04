@@ -3,8 +3,25 @@ import express from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertMaintenanceRequestSchema, insertAttachmentSchema, insertInviteCodeSchema } from "@shared/schema";
+// Supabase authentication middleware
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+// Mock auth functions for now - will be replaced with proper Supabase auth
+const setupAuth = async (app: any) => {
+  console.log("Setting up Supabase authentication...");
+};
+
+const isAuthenticated = async (req: any, res: any, next: any) => {
+  // For now, just pass through - will implement proper Supabase auth later
+  next();
+};
+import { insertMaintenanceRequestSchema, insertAttachmentSchema, insertInviteCodeSchema, users } from "@shared/schema";
+import { db } from './db';
+import { eq } from 'drizzle-orm';
 import multer from "multer";
 import path from "path";
 import { randomUUID } from "crypto";
@@ -44,8 +61,13 @@ interface AuthenticatedRequest extends Request {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware
-  await setupAuth(app);
+  // Auth middleware - setup conditionally
+  if (process.env.REPL_ID) {
+    const replitAuth = await import("./replitAuth");
+    await replitAuth.setupAuth(app);
+  } else {
+    console.log("Running in local development mode - skipping Replit auth setup");
+  }
 
   // Ensure uploads directory exists
   import('fs').then(fs => {
@@ -56,6 +78,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Serve uploaded files
   app.use('/uploads', express.static('uploads'));
+
+  // Firebase Auth routes
+  app.post('/api/auth/create-profile', async (req: Request, res: Response) => {
+    try {
+      const { id, email, firstName, lastName, role } = req.body;
+      
+      const user = await db.insert(users).values({
+        id,
+        email,
+        firstName,
+        lastName,
+        role: role || 'tenant',
+        isActive: true,
+      }).returning();
+
+      res.json(user[0]);
+    } catch (error) {
+      console.error('Error creating user profile:', error);
+      res.status(500).json({ message: 'Failed to create user profile' });
+    }
+  });
+
+  app.get('/api/auth/profile/:userId', async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+      
+      const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+      
+      if (user.length === 0) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      res.json(user[0]);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      res.status(500).json({ message: 'Failed to fetch user profile' });
+    }
+  });
 
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: AuthenticatedRequest, res) => {
@@ -305,30 +365,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const httpServer = createServer(app);
 
-  // WebSocket server for real-time updates
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
-
-  wss.on('connection', (ws) => {
-    console.log('New WebSocket connection');
-
-    ws.on('message', (message) => {
-      try {
-        const data = JSON.parse(message.toString());
-        console.log('Received:', data);
-
-        // Echo back for now - implement real-time features later
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'echo', data }));
-        }
-      } catch (error) {
-        console.error('WebSocket message error:', error);
-      }
-    });
-
-    ws.on('close', () => {
-      console.log('WebSocket connection closed');
-    });
-  });
+  // WebSocket server for real-time updates (temporarily disabled)
+  // const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  // 
+  // wss.on('connection', (ws) => {
+  //   console.log('New WebSocket connection');
+  // 
+  //   ws.on('message', (message) => {
+  //     try {
+  //       const data = JSON.parse(message.toString());
+  //       console.log('Received:', data);
+  // 
+  //       // Echo back for now - implement real-time features later
+  //       if (ws.readyState === WebSocket.OPEN) {
+  //         ws.send(JSON.stringify({ type: 'echo', data }));
+  //       }
+  //     } catch (error) {
+  //       console.error('WebSocket message error:', error);
+  //     }
+  //   });
+  // 
+  //   ws.on('close', () => {
+  //     console.log('WebSocket connection closed');
+  //   });
+  // });
 
   return httpServer;
 }

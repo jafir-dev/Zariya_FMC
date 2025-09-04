@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
 import Dashboard from "@/pages/Dashboard";
+import MasterDashboard from "@/pages/MasterDashboard";
 import TenantDashboard from "@/pages/TenantDashboard";
 import SupervisorDashboard from "@/pages/SupervisorDashboard";
 import TechnicianView from "@/pages/TechnicianView";
@@ -30,12 +31,76 @@ function Router() {
         <Route path="/" component={Landing} />
       ) : (
         <>
-          <Route path="/" component={Dashboard} />
-          <Route path="/tenant" component={TenantDashboard} />
-          <Route path="/supervisor" component={SupervisorDashboard} />
-          <Route path="/technician" component={TechnicianView} />
-          <Route path="/requests/new" component={NewRequest} />
-          <Route path="/requests/:id" component={RequestDetail} />
+          {/* Admin Routes */}
+          {user?.role === 'admin' && (
+            <>
+              <Route path="/" component={MasterDashboard} />
+              <Route path="/admin" component={MasterDashboard} />
+            </>
+          )}
+          
+          {/* FMC Head Routes */}
+          {user?.role === 'fmc_head' && (
+            <>
+              <Route path="/" component={MasterDashboard} />
+              <Route path="/admin" component={MasterDashboard} />
+            </>
+          )}
+          
+          {/* Tenant Routes */}
+          {user?.role === 'tenant' && (
+            <>
+              <Route path="/" component={TenantDashboard} />
+              <Route path="/tenant" component={TenantDashboard} />
+              <Route path="/requests/new" component={NewRequest} />
+              <Route path="/requests/:id" component={RequestDetail} />
+            </>
+          )}
+          
+          {/* FMC Supervisor Routes */}
+          {user?.role === 'fmc_supervisor' && (
+            <>
+              <Route path="/" component={SupervisorDashboard} />
+              <Route path="/supervisor" component={SupervisorDashboard} />
+              <Route path="/requests/:id" component={RequestDetail} />
+            </>
+          )}
+          
+          {/* FMC Technician Routes */}
+          {user?.role === 'fmc_technician' && (
+            <>
+              <Route path="/" component={TechnicianView} />
+              <Route path="/technician" component={TechnicianView} />
+              <Route path="/requests/:id" component={RequestDetail} />
+            </>
+          )}
+          
+          {/* Building Owner Routes */}
+          {user?.role === 'building_owner' && (
+            <>
+              <Route path="/" component={TenantDashboard} />
+              <Route path="/owner" component={TenantDashboard} />
+              <Route path="/requests/:id" component={RequestDetail} />
+            </>
+          )}
+          
+          {/* FMC Procurement Routes */}
+          {user?.role === 'fmc_procurement' && (
+            <>
+              <Route path="/" component={SupervisorDashboard} />
+              <Route path="/procurement" component={SupervisorDashboard} />
+              <Route path="/requests/:id" component={RequestDetail} />
+            </>
+          )}
+          
+          {/* Third Party Support Routes */}
+          {user?.role === 'third_party_support' && (
+            <>
+              <Route path="/" component={TechnicianView} />
+              <Route path="/support" component={TechnicianView} />
+              <Route path="/requests/:id" component={RequestDetail} />
+            </>
+          )}
         </>
       )}
       <Route component={NotFound} />

@@ -1,7 +1,11 @@
 import { defineConfig } from "drizzle-kit";
+import { config } from "dotenv";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL, ensure the database is provisioned");
+// Load environment variables from .env file
+config();
+
+if (!process.env.SUPABASE_DATABASE_URL) {
+  throw new Error("SUPABASE_DATABASE_URL environment variable is required. Please check your .env file.");
 }
 
 export default defineConfig({
@@ -9,6 +13,6 @@ export default defineConfig({
   schema: "./shared/schema.ts",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL,
+    url: process.env.SUPABASE_DATABASE_URL,
   },
 });

@@ -10,20 +10,10 @@ import {
   pgEnum,
   boolean,
   integer,
+  decimal,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-
-// Session storage table - mandatory for Replit Auth
-export const sessions = pgTable(
-  "sessions",
-  {
-    sid: varchar("sid").primaryKey(),
-    sess: jsonb("sess").notNull(),
-    expire: timestamp("expire").notNull(),
-  },
-  (table) => [index("IDX_session_expire").on(table.expire)],
-);
 
 // Enums for user roles and request statuses
 export const userRoleEnum = pgEnum("user_role", [
@@ -33,7 +23,8 @@ export const userRoleEnum = pgEnum("user_role", [
   "fmc_supervisor",
   "fmc_technician",
   "fmc_procurement",
-  "third_party_support"
+  "third_party_support",
+  "admin"
 ]);
 
 export const requestStatusEnum = pgEnum("request_status", [
@@ -59,7 +50,57 @@ export const categoryEnum = pgEnum("category", [
   "other"
 ]);
 
-// User storage table - mandatory for Replit Auth
+export const subscriptionStatusEnum = pgEnum("subscription_status", [
+  "active",
+  "canceled",
+  "past_due",
+  "unpaid",
+  "trialing"
+]);
+
+export const subscriptionTierEnum = pgEnum("subscription_tier", [
+  "basic",
+  "professional",
+  "enterprise"
+]);
+
+// FMC Organizations table
+export const fmcOrganizations = pgTable("fmc_organizations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  logoUrl: varchar("logo_url"),
+  website: varchar("website"),
+  contactEmail: varchar("contact_email").notNull(),
+  contactPhone: varchar("contact_phone"),
+  address: text("address"),
+  isActive: boolean("is_active").notNull().default(true),
+  stripeCustomerId: varchar("stripe_customer_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Subscription tiers table
+export const subscriptionTiers = pgTable("subscription_tiers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  tier: subscriptionTierEnum("tier").notNull(),
+  description: text("description"),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency").notNull().default("USD"),
+  billingCycle: varchar("billing_cycle").notNull().default("monthly"),
+  features: jsonb("features").notNull().default("[]"),
+  maxUsers: integer("max_users"),
+  maxBuildings: integer("max_buildings"),
+  maxRequestsPerMonth: integer("max_requests_per_month"),
+  stripeProductId: varchar("stripe_product_id"),
+  stripePriceId: varchar("stripe_price_id"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User storage table - now with Supabase auth integration
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
@@ -69,7 +110,24 @@ export const users = pgTable("users", {
   role: userRoleEnum("role").notNull().default("tenant"),
   phoneNumber: varchar("phone_number"),
   isActive: boolean("is_active").notNull().default(true),
-  tenantId: varchar("tenant_id"), // For multi-tenant isolation
+  fmcOrganizationId: varchar("fmc_organization_id").references(() => fmcOrganizations.id),
+  stripeCustomerId: varchar("stripe_customer_id"),
+  firebaseToken: varchar("firebase_token"),
+  notificationPreferences: jsonb("notification_preferences").default("{}"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User subscriptions table
+export const userSubscriptions = pgTable("user_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  tierId: varchar("tier_id").notNull().references(() => subscriptionTiers.id),
+  status: subscriptionStatusEnum("status").notNull().default("active"),
+  stripeSubscriptionId: varchar("stripe_subscription_id"),
+  currentPeriodStart: timestamp("current_period_start"),
+  currentPeriodEnd: timestamp("current_period_end"),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -79,7 +137,7 @@ export const buildings = pgTable("buildings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name").notNull(),
   address: text("address").notNull(),
-  tenantId: varchar("tenant_id").notNull(),
+  fmcOrganizationId: varchar("fmc_organization_id").notNull().references(() => fmcOrganizations.id),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -107,7 +165,7 @@ export const maintenanceRequests = pgTable("maintenance_requests", {
   priority: priorityEnum("priority").notNull().default("medium"),
   status: requestStatusEnum("status").notNull().default("open"),
   propertyId: varchar("property_id").notNull().references(() => properties.id),
-  tenantId: varchar("tenant_id").notNull(),
+  fmcOrganizationId: varchar("fmc_organization_id").notNull().references(() => fmcOrganizations.id),
   assignedTechnicianId: varchar("assigned_technician_id").references(() => users.id),
   supervisorId: varchar("supervisor_id").references(() => users.id),
   preferredDate: timestamp("preferred_date"),
@@ -151,7 +209,7 @@ export const requestTimeline = pgTable("request_timeline", {
 export const inviteCodes = pgTable("invite_codes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   code: varchar("code").notNull().unique(),
-  tenantId: varchar("tenant_id").notNull(),
+  fmcOrganizationId: varchar("fmc_organization_id").notNull().references(() => fmcOrganizations.id),
   role: userRoleEnum("role").notNull(),
   expiresAt: timestamp("expires_at").notNull(),
   usedBy: varchar("used_by").references(() => users.id),
@@ -161,8 +219,40 @@ export const inviteCodes = pgTable("invite_codes", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Notifications table
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  title: varchar("title").notNull(),
+  message: text("message").notNull(),
+  type: varchar("type").notNull().default("info"),
+  isRead: boolean("is_read").notNull().default(false),
+  data: jsonb("data").default("{}"),
+  sentAt: timestamp("sent_at").defaultNow(),
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const fmcOrganizationsRelations = relations(fmcOrganizations, ({ many }) => ({
+  users: many(users),
+  buildings: many(buildings),
+  inviteCodes: many(inviteCodes),
+}));
+
+export const subscriptionTiersRelations = relations(subscriptionTiers, ({ many }) => ({
+  subscriptions: many(userSubscriptions),
+}));
+
+export const usersRelations = relations(users, ({ one, many }) => ({
+  organization: one(fmcOrganizations, {
+    fields: [users.fmcOrganizationId],
+    references: [fmcOrganizations.id],
+  }),
+  subscription: one(userSubscriptions, {
+    fields: [users.id],
+    references: [userSubscriptions.userId],
+  }),
   properties: many(properties),
   assignedRequests: many(maintenanceRequests, { relationName: "assignedTechnician" }),
   supervisorRequests: many(maintenanceRequests, { relationName: "supervisor" }),
@@ -170,9 +260,25 @@ export const usersRelations = relations(users, ({ many }) => ({
   timelineActions: many(requestTimeline),
   createdInvites: many(inviteCodes, { relationName: "createdBy" }),
   usedInvites: many(inviteCodes, { relationName: "usedBy" }),
+  notifications: many(notifications),
 }));
 
-export const buildingsRelations = relations(buildings, ({ many }) => ({
+export const userSubscriptionsRelations = relations(userSubscriptions, ({ one }) => ({
+  user: one(users, {
+    fields: [userSubscriptions.userId],
+    references: [users.id],
+  }),
+  tier: one(subscriptionTiers, {
+    fields: [userSubscriptions.tierId],
+    references: [subscriptionTiers.id],
+  }),
+}));
+
+export const buildingsRelations = relations(buildings, ({ one, many }) => ({
+  organization: one(fmcOrganizations, {
+    fields: [buildings.fmcOrganizationId],
+    references: [fmcOrganizations.id],
+  }),
   properties: many(properties),
 }));
 
@@ -192,6 +298,10 @@ export const maintenanceRequestsRelations = relations(maintenanceRequests, ({ on
   property: one(properties, {
     fields: [maintenanceRequests.propertyId],
     references: [properties.id],
+  }),
+  organization: one(fmcOrganizations, {
+    fields: [maintenanceRequests.fmcOrganizationId],
+    references: [fmcOrganizations.id],
   }),
   assignedTechnician: one(users, {
     fields: [maintenanceRequests.assignedTechnicianId],
@@ -230,6 +340,10 @@ export const requestTimelineRelations = relations(requestTimeline, ({ one }) => 
 }));
 
 export const inviteCodesRelations = relations(inviteCodes, ({ one }) => ({
+  organization: one(fmcOrganizations, {
+    fields: [inviteCodes.fmcOrganizationId],
+    references: [fmcOrganizations.id],
+  }),
   createdByUser: one(users, {
     fields: [inviteCodes.createdBy],
     references: [users.id],
@@ -242,8 +356,33 @@ export const inviteCodesRelations = relations(inviteCodes, ({ one }) => ({
   }),
 }));
 
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
+export const insertFmcOrganizationSchema = createInsertSchema(fmcOrganizations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSubscriptionTierSchema = createInsertSchema(subscriptionTiers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserSubscriptionSchema = createInsertSchema(userSubscriptions).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -283,10 +422,24 @@ export const insertInviteCodeSchema = createInsertSchema(inviteCodes).omit({
   createdAt: true,
 });
 
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
+export type FmcOrganization = typeof fmcOrganizations.$inferSelect;
+export type InsertFmcOrganization = z.infer<typeof insertFmcOrganizationSchema>;
+
+export type SubscriptionTier = typeof subscriptionTiers.$inferSelect;
+export type InsertSubscriptionTier = z.infer<typeof insertSubscriptionTierSchema>;
+
 export type UpsertUser = z.infer<typeof insertUserSchema> & { id?: string };
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+
+export type UserSubscription = typeof userSubscriptions.$inferSelect;
+export type InsertUserSubscription = z.infer<typeof insertUserSubscriptionSchema>;
 
 export type Building = typeof buildings.$inferSelect;
 export type InsertBuilding = z.infer<typeof insertBuildingSchema>;
@@ -305,3 +458,6 @@ export type InsertRequestTimeline = z.infer<typeof insertRequestTimelineSchema>;
 
 export type InviteCode = typeof inviteCodes.$inferSelect;
 export type InsertInviteCode = z.infer<typeof insertInviteCodeSchema>;
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;

@@ -1,0 +1,1393 @@
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zariya FMC - Facility Management Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+         theme: {
+           extend: {
+            borderRadius: {
+            lg: "var(--radius)",
+            md: "calc(var(--radius) - 2px)",
+            sm: "calc(var(--radius) - 4px)",
+            },
+            colors: {
+            background: "var(--background)",
+            foreground: "var(--foreground)",
+            card: {
+               DEFAULT: "var(--card)",
+               foreground: "var(--card-foreground)",
+            },
+            popover: {
+               DEFAULT: "var(--popover)",
+               foreground: "var(--popover-foreground)",
+            },
+            primary: {
+               DEFAULT: "var(--primary)",
+               foreground: "var(--primary-foreground)",
+            },
+            secondary: {
+               DEFAULT: "var(--secondary)",
+               foreground: "var(--secondary-foreground)",
+            },
+            muted: {
+               DEFAULT: "var(--muted)",
+               foreground: "var(--muted-foreground)",
+            },
+            accent: {
+               DEFAULT: "var(--accent)",
+               foreground: "var(--accent-foreground)",
+            },
+            destructive: {
+               DEFAULT: "var(--destructive)",
+               foreground: "var(--destructive-foreground)",
+            },
+            border: "var(--border)",
+            input: "var(--input)",
+            ring: "var(--ring)",
+            chart: {
+               "1": "var(--chart-1)",
+               "2": "var(--chart-2)",
+               "3": "var(--chart-3)",
+               "4": "var(--chart-4)",
+               "5": "var(--chart-5)",
+            }
+            },
+            fontFamily: {
+            sans: ["var(--font-sans)"],
+            serif: ["var(--font-serif)"],
+            mono: ["var(--font-mono)"],
+         }
+    },
+  }
+      };
+    </script>
+    <style>
+        :root {
+            --card: #fcfcfc;
+            --ring: hsl(0, 0%, 41.96%);
+            --input: #b5b5b5;
+            --muted: #e3e3e3;
+            --accent: hsl(0, 0%, 100%);
+            --border: #e8e8e8;
+            --radius: 0.8rem;
+            --shadow: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00), 0px 1px 2px -1px hsl(9, 75%, 61% / 0.00);
+            --chart-1: hsl(203.8863, 88.2845%, 53.1373%);
+            --chart-2: hsl(159.7826, 100%, 36.0784%);
+            --chart-3: hsl(42.0290, 92.8251%, 56.2745%);
+            --chart-4: hsl(147.1429, 78.5047%, 41.9608%);
+            --chart-5: hsl(341.4894, 75.2000%, 50.9804%);
+            --popover: hsl(45, 25%, 97%);
+            --primary: #eb1a4e;
+            --sidebar: hsl(45, 25%, 97%);
+            --spacing: 0.25rem;
+            --font-mono: Menlo, monospace;
+            --font-sans: 'Poppins', sans-serif;
+            --secondary: #c4c4c4;
+            --shadow-lg: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00), 0px 4px 6px -1px hsl(9, 75%, 61% / 0.00);
+            --shadow-md: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00), 0px 2px 4px -1px hsl(9, 75%, 61% / 0.00);
+            --shadow-sm: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00), 0px 1px 2px -1px hsl(9, 75%, 61% / 0.00);
+            --shadow-xl: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00), 0px 8px 10px -1px hsl(9, 75%, 61% / 0.00);
+            --shadow-xs: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00);
+            --background: #f0f0f0;
+            --font-serif: 'Poppins', sans-serif;
+            --foreground: #1a1a1a;
+            --shadow-2xl: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00);
+            --shadow-2xs: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00);
+            --destructive: hsl(0, 0%, 0%);
+            --sidebar-ring: hsl(9, 75%, 61%);
+            --sidebar-accent: hsl(25, 45%, 80%);
+            --sidebar-border: hsl(45, 15%, 80%);
+            --card-foreground: hsl(0, 0%, 0%);
+            --sidebar-primary: hsl(9, 75%, 61%);
+            --tracking-normal: 0em;
+            --muted-foreground: #212121;
+            --accent-foreground: hsl(0, 0%, 10.2%);
+            --popover-foreground: hsl(0, 0%, 100%);
+            --primary-foreground: #ffffff;
+            --sidebar-foreground: hsl(20, 14%, 17%);
+            --secondary-foreground: #1a1a1a;
+            --destructive-foreground: #ffffff;
+            --sidebar-accent-foreground: hsl(20, 14%, 17%);
+            --sidebar-primary-foreground: hsl(0, 0%, 100%);
+        }
+        
+        .dark {
+            --card: hsl(20, 14%, 8%);
+            --ring: hsl(9, 75%, 61%);
+            --input: hsl(20, 14%, 18%);
+            --muted: hsl(20, 14%, 15%);
+            --accent: hsl(25, 45%, 20%);
+            --border: hsl(20, 14%, 15%);
+            --chart-1: hsl(203.8863, 88.2845%, 53.1373%);
+            --chart-2: hsl(159.7826, 100%, 36.0784%);
+            --chart-3: hsl(42.0290, 92.8251%, 56.2745%);
+            --chart-4: hsl(147.1429, 78.5047%, 41.9608%);
+            --chart-5: hsl(341.4894, 75.2000%, 50.9804%);
+            --popover: hsl(20, 14%, 4%);
+            --primary: hsl(9, 75%, 61%);
+            --sidebar: hsl(20, 14%, 8%);
+            --secondary: hsl(30, 15%, 52%);
+            --background: hsl(20, 14%, 4%);
+            --foreground: hsl(45, 25%, 91%);
+            --destructive: hsl(356.3033, 90.5579%, 54.3137%);
+            --sidebar-ring: hsl(9, 75%, 61%);
+            --sidebar-accent: hsl(25, 45%, 20%);
+            --sidebar-border: hsl(20, 14%, 15%);
+            --card-foreground: hsl(45, 25%, 85%);
+            --sidebar-primary: hsl(9, 75%, 61%);
+            --muted-foreground: hsl(45, 15%, 46%);
+            --accent-foreground: hsl(45, 25%, 85%);
+            --popover-foreground: hsl(45, 25%, 91%);
+            --primary-foreground: hsl(0, 0%, 100%);
+            --sidebar-foreground: hsl(45, 25%, 85%);
+            --secondary-foreground: hsl(0, 0%, 100%);
+            --destructive-foreground: hsl(0, 0%, 100%);
+            --sidebar-accent-foreground: hsl(45, 25%, 85%);
+            --sidebar-primary-foreground: hsl(0, 0%, 100%);
+        }
+
+        body {
+            font-family: var(--font-sans);
+        }
+        
+        .status-badge-open { @apply bg-blue-100 text-blue-800; }
+        .status-badge-assigned { @apply bg-yellow-100 text-yellow-800; }
+        .status-badge-in-progress { @apply bg-orange-100 text-orange-800; }
+        .status-badge-completed { @apply bg-green-100 text-green-800; }
+        .status-badge-closed { @apply bg-gray-100 text-gray-800; }
+        
+        .priority-high { @apply bg-red-100 text-red-800; }
+        .priority-medium { @apply bg-yellow-100 text-yellow-800; }
+        .priority-low { @apply bg-green-100 text-green-800; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-background text-foreground min-h-screen">
+
+    <!-- @COMPONENT: App Router Container -->
+    <div id="app-container" class="min-h-screen">
+        
+        <!-- AUTH SCREEN -->
+        <!-- @COMPONENT: AuthenticationScreen [initial landing view] -->
+        <div id="auth-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent">
+            <div class="w-full max-w-md mx-4">
+                <div class="bg-card rounded-lg shadow-lg p-8 space-y-6">
+                    <!-- Logo and branding -->
+                    <div class="text-center space-y-2">
+                        <div class="w-16 h-16 bg-primary rounded-full mx-auto flex items-center justify-center mb-4">
+                            <i class="fas fa-tools text-2xl text-primary-foreground"></i>
+                        </div>
+                        <h1 class="text-2xl font-bold text-foreground">Zariya FMC</h1>
+                        <p class="text-muted-foreground">Facility Management Platform</p>
+                    </div>
+                    
+                    <!-- Auth tabs -->
+                    <div class="border-b border-border">
+                        <nav class="flex space-x-1">
+                            <button class="auth-tab active px-4 py-2 text-sm font-medium border-b-2 border-primary text-primary" data-tab="signin">
+                                Sign In
+                            </button>
+                            <button class="auth-tab px-4 py-2 text-sm font-medium border-b-2 border-transparent text-muted-foreground hover:text-foreground" data-tab="signup">
+                                Sign Up
+                            </button>
+                        </nav>
+                    </div>
+                    
+                    <!-- Sign In Form -->
+                    <div id="signin-form" class="space-y-4">
+                        <!-- Google Sign-in -->
+                        <button class="w-full flex items-center justify-center px-4 py-3 border border-border rounded-md shadow-sm text-sm font-medium text-foreground bg-card hover:bg-muted transition-colors">
+                            <svg class="w-5 h-5 mr-3" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                            </svg>
+                            Continue with Google
+                        </button>
+                        
+                        <div class="relative">
+                            <div class="absolute inset-0 flex items-center">
+                                <div class="w-full border-t border-border"></div>
+                            </div>
+                            <div class="relative flex justify-center text-sm">
+                                <span class="px-2 bg-card text-muted-foreground">or</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Email Form -->
+                        <form class="space-y-4" data-implementation="Should validate credentials and handle authentication">
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-2">Email</label>
+                                <input type="email" class="w-full px-3 py-2 border border-input rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter your email" data-mock="true">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-2">Password</label>
+                                <input type="password" class="w-full px-3 py-2 border border-input rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter your password" data-mock="true">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-2">Invite Code (FMC Access)</label>
+                                <input type="text" class="w-full px-3 py-2 border border-input rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Optional: Enter invite code" data-mock="true">
+                            </div>
+                            <button type="submit" class="w-full bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90 transition-colors font-medium">
+                                Sign In
+                            </button>
+                        </form>
+                        
+                        <div class="text-center">
+                            <a href="#" class="text-sm text-primary hover:underline">Forgot your password?</a>
+                        </div>
+                    </div>
+                    
+                    <!-- Sign Up Form (hidden by default) -->
+                    <div id="signup-form" class="space-y-4 hidden">
+                        <form class="space-y-4" data-implementation="Should handle new user registration">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-foreground mb-2">First Name</label>
+                                    <input type="text" class="w-full px-3 py-2 border border-input rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary" data-mock="true">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-foreground mb-2">Last Name</label>
+                                    <input type="text" class="w-full px-3 py-2 border border-input rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary" data-mock="true">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-2">Email</label>
+                                <input type="email" class="w-full px-3 py-2 border border-input rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary" data-mock="true">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-2">Password</label>
+                                <input type="password" class="w-full px-3 py-2 border border-input rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary" data-mock="true">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-2">Confirm Password</label>
+                                <input type="password" class="w-full px-3 py-2 border border-input rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary" data-mock="true">
+                            </div>
+                            <button type="submit" class="w-full bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90 transition-colors font-medium">
+                                Create Account
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: AuthenticationScreen -->
+
+        <!-- MAIN APPLICATION SHELL -->
+        <!-- @COMPONENT: MainApplicationShell [authenticated user interface] -->
+        <div id="main-app" class="hidden min-h-screen bg-background">
+            
+            <!-- Top Navigation Bar -->
+            <!-- @COMPONENT: TopNavigation [global navigation and user controls] -->
+            <nav class="bg-card border-b border-border shadow-sm">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between items-center h-16">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex-shrink-0 flex items-center">
+                                <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                                    <i class="fas fa-tools text-sm text-primary-foreground"></i>
+                                </div>
+                                <span class="ml-2 text-xl font-bold text-foreground">Zariya FMC</span>
+                            </div>
+                            
+                            <!-- Role Selector -->
+                            <div class="hidden md:block">
+                                <select id="role-selector" class="px-3 py-1 text-sm border border-border rounded-md bg-card focus:ring-2 focus:ring-primary focus:border-primary" data-implementation="Should switch user interface based on selected role">
+                                    <option value="tenant" data-mock="true">Tenant View</option>
+                                    <option value="supervisor" data-mock="true">FMC Supervisor</option>
+                                    <option value="technician" data-mock="true">Technician</option>
+                                    <option value="procurement" data-mock="true">Procurement</option>
+                                    <option value="building-owner" data-mock="true">Building Owner</option>
+                                    <option value="fmc-head" data-mock="true">FMC Head</option>
+                                    <option value="third-party" data-mock="true">Third Party</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-4">
+                            <!-- Notifications -->
+                            <button class="relative p-2 text-muted-foreground hover:text-foreground transition-colors" data-implementation="Should show notification dropdown">
+                                <i class="fas fa-bell text-lg"></i>
+                                <span class="absolute -top-1 -right-1 h-5 w-5 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center" data-bind="notificationCount">3</span>
+                            </button>
+                            
+                            <!-- User Menu -->
+                            <div class="relative">
+                                <button class="flex items-center space-x-2 p-2 rounded-md hover:bg-muted transition-colors" data-implementation="Should show user dropdown menu">
+                                    <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                                        <span class="text-primary-foreground text-sm font-medium" data-bind="user.initials" data-mock="true">JD</span>
+                                    </div>
+                                    <span class="hidden md:block text-sm font-medium text-foreground" data-bind="user.name" data-mock="true">John Doe</span>
+                                    <i class="fas fa-chevron-down text-xs text-muted-foreground"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            <!-- @END_COMPONENT: TopNavigation -->
+
+            <!-- Main Content Area -->
+            <div class="flex-1">
+                
+                <!-- TENANT DASHBOARD VIEW -->
+                <!-- @COMPONENT: TenantDashboard [tenant's main interface] -->
+                <div id="tenant-view" class="tenant-dashboard">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        
+                        <!-- Dashboard Header -->
+                        <div class="mb-8">
+                            <h1 class="text-3xl font-bold text-foreground">My Dashboard</h1>
+                            <p class="text-muted-foreground mt-2">Manage your maintenance requests and properties</p>
+                        </div>
+                        
+                        <!-- Quick Actions -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <button class="bg-primary text-primary-foreground p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow text-left group" data-event="click:createNewRequest">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-plus-circle text-2xl"></i>
+                                    <div>
+                                        <h3 class="font-semibold">New Request</h3>
+                                        <p class="text-sm text-primary-foreground/80">Submit maintenance request</p>
+                                    </div>
+                                </div>
+                            </button>
+                            
+                            <div class="bg-card p-6 rounded-lg shadow-sm border border-border">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-clock text-2xl text-yellow-500"></i>
+                                    <div>
+                                        <h3 class="font-semibold text-foreground">Pending</h3>
+                                        <p class="text-2xl font-bold text-foreground" data-bind="stats.pendingRequests" data-mock="true">4</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-card p-6 rounded-lg shadow-sm border border-border">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-check-circle text-2xl text-green-500"></i>
+                                    <div>
+                                        <h3 class="font-semibold text-foreground">Completed</h3>
+                                        <p class="text-2xl font-bold text-foreground" data-bind="stats.completedRequests" data-mock="true">12</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Properties and Recent Requests -->
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            
+                            <!-- My Properties -->
+                            <div class="lg:col-span-1">
+                                <div class="bg-card rounded-lg shadow-sm border border-border p-6">
+                                    <h3 class="font-semibold text-foreground mb-4">My Properties</h3>
+                                    <!-- @MAP: properties.map(property => ( -->
+                                    <div class="space-y-3">
+                                        <div class="flex items-center justify-between p-3 rounded-md bg-muted/50 hover:bg-muted transition-colors cursor-pointer" data-implementation="Should navigate to property details">
+                                            <div>
+                                                <p class="font-medium text-foreground" data-mock="true">Apartment 12A</p>
+                                                <p class="text-sm text-muted-foreground" data-mock="true">Skyview Towers</p>
+                                            </div>
+                                            <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full" data-mock="true">Active</span>
+                                        </div>
+                                        <div class="flex items-center justify-between p-3 rounded-md bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
+                                            <div>
+                                                <p class="font-medium text-foreground" data-mock="true">Office 205</p>
+                                                <p class="text-sm text-muted-foreground" data-mock="true">Business Plaza</p>
+                                            </div>
+                                            <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full" data-mock="true">Active</span>
+                                        </div>
+                                    </div>
+                                    <!-- @END_MAP )) -->
+                                    <button class="w-full mt-4 text-primary text-sm hover:underline" data-implementation="Should open property management interface">
+                                        + Add Property
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Recent Requests -->
+                            <div class="lg:col-span-2">
+                                <div class="bg-card rounded-lg shadow-sm border border-border p-6">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <h3 class="font-semibold text-foreground">Recent Requests</h3>
+                                        <button class="text-primary text-sm hover:underline" data-implementation="Should navigate to full request history">View All</button>
+                                    </div>
+                                    
+                                    <!-- @MAP: requests.map(request => ( -->
+                                    <div class="space-y-4">
+                                        <div class="border border-border rounded-md p-4 hover:shadow-md transition-shadow cursor-pointer" data-implementation="Should open request detail view">
+                                            <div class="flex items-start justify-between mb-2">
+                                                <div>
+                                                    <h4 class="font-medium text-foreground" data-mock="true">Air Conditioning Not Working</h4>
+                                                    <p class="text-sm text-muted-foreground" data-mock="true">Apartment 12A • Jan 25, 2025</p>
+                                                </div>
+                                                <span class="text-xs px-2 py-1 rounded-full status-badge-assigned" data-mock="true">Assigned</span>
+                                            </div>
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-xs px-2 py-1 rounded-full priority-high" data-mock="true">High Priority</span>
+                                                <div class="flex items-center text-sm text-muted-foreground">
+                                                    <i class="fas fa-user text-xs mr-1"></i>
+                                                    <span data-mock="true">Tech: Mike Johnson</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="border border-border rounded-md p-4 hover:shadow-md transition-shadow cursor-pointer">
+                                            <div class="flex items-start justify-between mb-2">
+                                                <div>
+                                                    <h4 class="font-medium text-foreground" data-mock="true">Leaky Faucet in Kitchen</h4>
+                                                    <p class="text-sm text-muted-foreground" data-mock="true">Apartment 12A • Jan 23, 2025</p>
+                                                </div>
+                                                <span class="text-xs px-2 py-1 rounded-full status-badge-completed" data-mock="true">Completed</span>
+                                            </div>
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-xs px-2 py-1 rounded-full priority-medium" data-mock="true">Medium Priority</span>
+                                                <div class="flex items-center text-sm text-muted-foreground">
+                                                    <i class="fas fa-user text-xs mr-1"></i>
+                                                    <span data-mock="true">Tech: Sarah Chen</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="border border-border rounded-md p-4 hover:shadow-md transition-shadow cursor-pointer">
+                                            <div class="flex items-start justify-between mb-2">
+                                                <div>
+                                                    <h4 class="font-medium text-foreground" data-mock="true">Office Light Flickering</h4>
+                                                    <p class="text-sm text-muted-foreground" data-mock="true">Office 205 • Jan 22, 2025</p>
+                                                </div>
+                                                <span class="text-xs px-2 py-1 rounded-full status-badge-in-progress" data-mock="true">In Progress</span>
+                                            </div>
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-xs px-2 py-1 rounded-full priority-low" data-mock="true">Low Priority</span>
+                                                <div class="flex items-center text-sm text-muted-foreground">
+                                                    <i class="fas fa-user text-xs mr-1"></i>
+                                                    <span data-mock="true">Tech: Alex Rivera</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- @END_MAP )) -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: TenantDashboard -->
+
+                <!-- FMC SUPERVISOR DASHBOARD VIEW -->
+                <!-- @COMPONENT: SupervisorDashboard [FMC supervisor main interface] -->
+                <div id="supervisor-view" class="supervisor-dashboard hidden">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        
+                        <!-- Dashboard Header -->
+                        <div class="mb-8">
+                            <h1 class="text-3xl font-bold text-foreground">Supervisor Dashboard</h1>
+                            <p class="text-muted-foreground mt-2">Manage requests, assign technicians, and monitor building operations</p>
+                        </div>
+                        
+                        <!-- Key Metrics -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                            <div class="bg-card p-6 rounded-lg shadow-sm border border-border">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-clipboard-list text-2xl text-blue-500"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-muted-foreground">Open Requests</p>
+                                        <p class="text-2xl font-bold text-foreground" data-bind="supervisorStats.openRequests" data-mock="true">23</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-card p-6 rounded-lg shadow-sm border border-border">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-users text-2xl text-green-500"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-muted-foreground">Active Technicians</p>
+                                        <p class="text-2xl font-bold text-foreground" data-bind="supervisorStats.activeTechnicians" data-mock="true">8</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-card p-6 rounded-lg shadow-sm border border-border">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-clock text-2xl text-yellow-500"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-muted-foreground">Avg Response Time</p>
+                                        <p class="text-2xl font-bold text-foreground" data-bind="supervisorStats.avgResponseTime" data-mock="true">2.3h</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-card p-6 rounded-lg shadow-sm border border-border">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-building text-2xl text-purple-500"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-muted-foreground">Buildings Managed</p>
+                                        <p class="text-2xl font-bold text-foreground" data-bind="supervisorStats.buildingsManaged" data-mock="true">12</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Filter and Search -->
+                        <div class="bg-card rounded-lg shadow-sm border border-border p-6 mb-8">
+                            <div class="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                                <div class="flex flex-col md:flex-row gap-4 flex-1">
+                                    <div class="flex-1">
+                                        <input type="text" placeholder="Search requests..." class="w-full px-3 py-2 border border-input rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary" data-implementation="Should filter requests based on search terms">
+                                    </div>
+                                    <select class="px-3 py-2 border border-input rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary" data-implementation="Should filter by building">
+                                        <option data-mock="true">All Buildings</option>
+                                        <option data-mock="true">Skyview Towers</option>
+                                        <option data-mock="true">Business Plaza</option>
+                                        <option data-mock="true">Garden Heights</option>
+                                    </select>
+                                    <select class="px-3 py-2 border border-input rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary" data-implementation="Should filter by status">
+                                        <option data-mock="true">All Status</option>
+                                        <option data-mock="true">Open</option>
+                                        <option data-mock="true">Assigned</option>
+                                        <option data-mock="true">In Progress</option>
+                                        <option data-mock="true">Completed</option>
+                                    </select>
+                                </div>
+                                <button class="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
+                                    <i class="fas fa-download mr-2"></i>Export
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Requests Table -->
+                        <div class="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
+                            <div class="px-6 py-4 border-b border-border">
+                                <h3 class="font-semibold text-foreground">Maintenance Requests</h3>
+                            </div>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-border">
+                                    <thead class="bg-muted/50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Request</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Building/Unit</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Priority</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Technician</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Created</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-card divide-y divide-border">
+                                        <!-- @MAP: supervisorRequests.map(request => ( -->
+                                        <tr class="hover:bg-muted/50 transition-colors">
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div>
+                                                    <div class="text-sm font-medium text-foreground" data-mock="true">HVAC System Malfunction</div>
+                                                    <div class="text-sm text-muted-foreground" data-mock="true">#REQ-2025-001</div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-foreground" data-mock="true">Skyview Towers</div>
+                                                <div class="text-sm text-muted-foreground" data-mock="true">Apt 12A</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="text-xs px-2 py-1 rounded-full priority-high" data-mock="true">High</span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="text-xs px-2 py-1 rounded-full status-badge-open" data-mock="true">Open</span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground" data-mock="true">
+                                                Unassigned
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground" data-mock="true">
+                                                Jan 27, 10:30 AM
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <button class="text-primary hover:text-primary/80 mr-3" data-implementation="Should open assignment modal">
+                                                    Assign
+                                                </button>
+                                                <button class="text-muted-foreground hover:text-foreground" data-implementation="Should open request details">
+                                                    View
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        
+                                        <tr class="hover:bg-muted/50 transition-colors">
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div>
+                                                    <div class="text-sm font-medium text-foreground" data-mock="true">Elevator Maintenance</div>
+                                                    <div class="text-sm text-muted-foreground" data-mock="true">#REQ-2025-002</div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-foreground" data-mock="true">Business Plaza</div>
+                                                <div class="text-sm text-muted-foreground" data-mock="true">Main Lobby</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="text-xs px-2 py-1 rounded-full priority-medium" data-mock="true">Medium</span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="text-xs px-2 py-1 rounded-full status-badge-assigned" data-mock="true">Assigned</span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-foreground" data-mock="true">
+                                                Mike Johnson
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground" data-mock="true">
+                                                Jan 27, 9:15 AM
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <button class="text-primary hover:text-primary/80 mr-3" data-implementation="Should open reassignment options">
+                                                    Reassign
+                                                </button>
+                                                <button class="text-muted-foreground hover:text-foreground" data-implementation="Should open request details">
+                                                    View
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        
+                                        <tr class="hover:bg-muted/50 transition-colors">
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div>
+                                                    <div class="text-sm font-medium text-foreground" data-mock="true">Plumbing Issue</div>
+                                                    <div class="text-sm text-muted-foreground" data-mock="true">#REQ-2025-003</div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-foreground" data-mock="true">Garden Heights</div>
+                                                <div class="text-sm text-muted-foreground" data-mock="true">Unit 45B</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="text-xs px-2 py-1 rounded-full priority-low" data-mock="true">Low</span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="text-xs px-2 py-1 rounded-full status-badge-in-progress" data-mock="true">In Progress</span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-foreground" data-mock="true">
+                                                Sarah Chen
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground" data-mock="true">
+                                                Jan 26, 2:45 PM
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <button class="text-primary hover:text-primary/80 mr-3" data-implementation="Should open progress update modal">
+                                                    Update
+                                                </button>
+                                                <button class="text-muted-foreground hover:text-foreground" data-implementation="Should open request details">
+                                                    View
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <!-- @END_MAP )) -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Pagination -->
+                            <div class="bg-muted/50 px-6 py-3 flex items-center justify-between border-t border-border">
+                                <div class="flex-1 flex justify-between sm:hidden">
+                                    <button class="relative inline-flex items-center px-4 py-2 border border-border text-sm font-medium rounded-md text-muted-foreground bg-card hover:bg-muted">
+                                        Previous
+                                    </button>
+                                    <button class="ml-3 relative inline-flex items-center px-4 py-2 border border-border text-sm font-medium rounded-md text-muted-foreground bg-card hover:bg-muted">
+                                        Next
+                                    </button>
+                                </div>
+                                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                                    <div>
+                                        <p class="text-sm text-muted-foreground" data-mock="true">
+                                            Showing <span class="font-medium">1</span> to <span class="font-medium">10</span> of <span class="font-medium">23</span> results
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                                            <button class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-border bg-card text-sm font-medium text-muted-foreground hover:bg-muted">
+                                                <i class="fas fa-chevron-left"></i>
+                                            </button>
+                                            <button class="relative inline-flex items-center px-4 py-2 border border-border bg-primary text-sm font-medium text-primary-foreground">
+                                                1
+                                            </button>
+                                            <button class="relative inline-flex items-center px-4 py-2 border border-border bg-card text-sm font-medium text-muted-foreground hover:bg-muted">
+                                                2
+                                            </button>
+                                            <button class="relative inline-flex items-center px-4 py-2 border border-border bg-card text-sm font-medium text-muted-foreground hover:bg-muted">
+                                                3
+                                            </button>
+                                            <button class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-border bg-card text-sm font-medium text-muted-foreground hover:bg-muted">
+                                                <i class="fas fa-chevron-right"></i>
+                                            </button>
+                                        </nav>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: SupervisorDashboard -->
+
+                <!-- REQUEST DETAIL VIEW -->
+                <!-- @COMPONENT: RequestDetailView [detailed view of maintenance request] -->
+                <div id="request-detail" class="request-detail hidden">
+                    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        
+                        <!-- Header with Back Button -->
+                        <div class="flex items-center mb-6">
+                            <button class="mr-4 p-2 rounded-md hover:bg-muted transition-colors" data-implementation="Should navigate back to previous view">
+                                <i class="fas fa-arrow-left text-muted-foreground"></i>
+                            </button>
+                            <div>
+                                <h1 class="text-2xl font-bold text-foreground" data-mock="true">Air Conditioning Not Working</h1>
+                                <p class="text-muted-foreground" data-mock="true">Request #REQ-2025-001 • Created Jan 25, 2025</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Request Status and Info -->
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            
+                            <!-- Main Content -->
+                            <div class="lg:col-span-2 space-y-6">
+                                
+                                <!-- Request Details Card -->
+                                <div class="bg-card rounded-lg shadow-sm border border-border p-6">
+                                    <h3 class="font-semibold text-foreground mb-4">Request Details</h3>
+                                    
+                                    <div class="space-y-4">
+                                        <div class="flex justify-between items-start">
+                                            <span class="text-sm font-medium text-muted-foreground">Property:</span>
+                                            <span class="text-sm text-foreground" data-mock="true">Skyview Towers - Apartment 12A</span>
+                                        </div>
+                                        <div class="flex justify-between items-start">
+                                            <span class="text-sm font-medium text-muted-foreground">Priority:</span>
+                                            <span class="text-xs px-2 py-1 rounded-full priority-high" data-mock="true">High Priority</span>
+                                        </div>
+                                        <div class="flex justify-between items-start">
+                                            <span class="text-sm font-medium text-muted-foreground">Category:</span>
+                                            <span class="text-sm text-foreground" data-mock="true">HVAC</span>
+                                        </div>
+                                        <div class="flex justify-between items-start">
+                                            <span class="text-sm font-medium text-muted-foreground">Tenant:</span>
+                                            <span class="text-sm text-foreground" data-mock="true">John Doe</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-6">
+                                        <h4 class="font-medium text-foreground mb-2">Description</h4>
+                                        <p class="text-muted-foreground text-sm" data-mock="true">
+                                            The air conditioning unit in the master bedroom has stopped working completely. 
+                                            There's no airflow coming from any vents, and the thermostat display appears to be frozen. 
+                                            This issue started yesterday evening around 8 PM. The temperature in the apartment 
+                                            has become uncomfortable, especially given the current weather.
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Photos and Documentation -->
+                                <div class="bg-card rounded-lg shadow-sm border border-border p-6">
+                                    <h3 class="font-semibold text-foreground mb-4">Documentation</h3>
+                                    
+                                    <!-- Tenant Photos -->
+                                    <div class="mb-6">
+                                        <h4 class="font-medium text-foreground mb-3">Initial Photos (Tenant)</h4>
+                                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                            <!-- Image of broken AC unit thermostat display -->
+                                            <img src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&h=300" 
+                                                 alt="Broken AC thermostat display" 
+                                                 class="rounded-lg shadow-sm w-full h-24 object-cover cursor-pointer hover:shadow-md transition-shadow" 
+                                                 data-implementation="Should open image in modal for full view" data-mock-image="true">
+                                            <!-- Image of AC vents with no airflow -->
+                                            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&h=300" 
+                                                 alt="AC vent with no airflow" 
+                                                 class="rounded-lg shadow-sm w-full h-24 object-cover cursor-pointer hover:shadow-md transition-shadow" 
+                                                 data-implementation="Should open image in modal for full view" data-mock-image="true">
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Technician Photos (when available) -->
+                                    <div class="mb-6">
+                                        <h4 class="font-medium text-foreground mb-3">Work Progress Photos</h4>
+                                        <div class="text-center py-8 text-muted-foreground">
+                                            <i class="fas fa-camera text-2xl mb-2"></i>
+                                            <p class="text-sm" data-mock="true">Photos will appear here once technician begins work</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Timeline -->
+                                <div class="bg-card rounded-lg shadow-sm border border-border p-6">
+                                    <h3 class="font-semibold text-foreground mb-4">Timeline</h3>
+                                    
+                                    <div class="flow-root">
+                                        <ul class="-mb-8">
+                                            <!-- @MAP: timeline.map((event, index) => ( -->
+                                            <li>
+                                                <div class="relative pb-8">
+                                                    <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-border"></span>
+                                                    <div class="relative flex space-x-3">
+                                                        <div>
+                                                            <span class="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center ring-8 ring-card">
+                                                                <i class="fas fa-plus text-white text-xs"></i>
+                                                            </span>
+                                                        </div>
+                                                        <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                                                            <div>
+                                                                <p class="text-sm text-foreground" data-mock="true">Request created by <strong>John Doe</strong></p>
+                                                                <p class="text-xs text-muted-foreground" data-mock="true">Air conditioning unit stopped working in master bedroom</p>
+                                                            </div>
+                                                            <div class="text-right text-sm whitespace-nowrap text-muted-foreground" data-mock="true">
+                                                                Jan 25, 8:30 PM
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                            
+                                            <li>
+                                                <div class="relative pb-8">
+                                                    <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-border"></span>
+                                                    <div class="relative flex space-x-3">
+                                                        <div>
+                                                            <span class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-card">
+                                                                <i class="fas fa-eye text-white text-xs"></i>
+                                                            </span>
+                                                        </div>
+                                                        <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                                                            <div>
+                                                                <p class="text-sm text-foreground" data-mock="true">Request reviewed by <strong>FMC Supervisor</strong></p>
+                                                                <p class="text-xs text-muted-foreground" data-mock="true">Priority set to High due to HVAC system failure</p>
+                                                            </div>
+                                                            <div class="text-right text-sm whitespace-nowrap text-muted-foreground" data-mock="true">
+                                                                Jan 26, 9:15 AM
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                            
+                                            <li>
+                                                <div class="relative">
+                                                    <div class="relative flex space-x-3">
+                                                        <div>
+                                                            <span class="h-8 w-8 rounded-full bg-yellow-500 flex items-center justify-center ring-8 ring-card">
+                                                                <i class="fas fa-user text-white text-xs"></i>
+                                                            </span>
+                                                        </div>
+                                                        <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                                                            <div>
+                                                                <p class="text-sm text-foreground" data-mock="true">Assigned to <strong>Mike Johnson</strong></p>
+                                                                <p class="text-xs text-muted-foreground" data-mock="true">Scheduled for inspection on Jan 27, 2:00 PM</p>
+                                                            </div>
+                                                            <div class="text-right text-sm whitespace-nowrap text-muted-foreground" data-mock="true">
+                                                                Jan 26, 10:30 AM
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                            <!-- @END_MAP )) -->
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Sidebar -->
+                            <div class="lg:col-span-1">
+                                <div class="space-y-6">
+                                    
+                                    <!-- Current Status -->
+                                    <div class="bg-card rounded-lg shadow-sm border border-border p-6">
+                                        <h3 class="font-semibold text-foreground mb-4">Current Status</h3>
+                                        <div class="space-y-3">
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-sm text-muted-foreground">Status:</span>
+                                                <span class="text-xs px-2 py-1 rounded-full status-badge-assigned" data-mock="true">Assigned</span>
+                                            </div>
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-sm text-muted-foreground">Technician:</span>
+                                                <div class="text-right">
+                                                    <p class="text-sm font-medium text-foreground" data-mock="true">Mike Johnson</p>
+                                                    <p class="text-xs text-muted-foreground" data-mock="true">HVAC Specialist</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-sm text-muted-foreground">Scheduled:</span>
+                                                <span class="text-sm text-foreground" data-mock="true">Jan 27, 2:00 PM</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Actions -->
+                                    <div class="bg-card rounded-lg shadow-sm border border-border p-6">
+                                        <h3 class="font-semibold text-foreground mb-4">Actions</h3>
+                                        <div class="space-y-3">
+                                            <button class="w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm" data-implementation="Should open status update modal">
+                                                Update Status
+                                            </button>
+                                            <button class="w-full px-4 py-2 border border-border text-foreground rounded-md hover:bg-muted transition-colors text-sm" data-implementation="Should open technician reassignment modal">
+                                                Reassign Technician
+                                            </button>
+                                            <button class="w-full px-4 py-2 border border-border text-foreground rounded-md hover:bg-muted transition-colors text-sm" data-implementation="Should open communication interface">
+                                                Contact Tenant
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Contact Information -->
+                                    <div class="bg-card rounded-lg shadow-sm border border-border p-6">
+                                        <h3 class="font-semibold text-foreground mb-4">Contact Info</h3>
+                                        <div class="space-y-3">
+                                            <div>
+                                                <p class="text-sm font-medium text-foreground" data-mock="true">John Doe</p>
+                                                <p class="text-xs text-muted-foreground" data-mock="true">Tenant</p>
+                                            </div>
+                                            <div class="space-y-1">
+                                                <p class="text-sm text-muted-foreground">
+                                                    <i class="fas fa-phone text-xs mr-2"></i>
+                                                    <span data-mock="true">(555) 123-4567</span>
+                                                </p>
+                                                <p class="text-sm text-muted-foreground">
+                                                    <i class="fas fa-envelope text-xs mr-2"></i>
+                                                    <span data-mock="true">john.doe@email.com</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: RequestDetailView -->
+
+                <!-- NEW REQUEST MODAL -->
+                <!-- @COMPONENT: NewRequestModal [tenant request creation interface] -->
+                <div id="new-request-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
+                    <div class="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div class="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
+                            <h2 class="text-xl font-semibold text-foreground">Create Maintenance Request</h2>
+                            <button class="p-2 hover:bg-muted rounded-md transition-colors" data-event="click:closeModal">
+                                <i class="fas fa-times text-muted-foreground"></i>
+                            </button>
+                        </div>
+                        
+                        <form class="p-6 space-y-6" data-implementation="Should create new maintenance request">
+                            <!-- Property Selection -->
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-2">Property</label>
+                                <select class="w-full px-3 py-2 border border-input rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                                    <option value="" data-mock="true">Select a property</option>
+                                    <option value="skyview-12a" data-mock="true">Skyview Towers - Apartment 12A</option>
+                                    <option value="business-205" data-mock="true">Business Plaza - Office 205</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Category -->
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-2">Category</label>
+                                <select class="w-full px-3 py-2 border border-input rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                                    <option value="" data-mock="true">Select category</option>
+                                    <option value="hvac" data-mock="true">HVAC</option>
+                                    <option value="plumbing" data-mock="true">Plumbing</option>
+                                    <option value="electrical" data-mock="true">Electrical</option>
+                                    <option value="general" data-mock="true">General Maintenance</option>
+                                    <option value="appliances" data-mock="true">Appliances</option>
+                                    <option value="other" data-mock="true">Other</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Priority -->
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-2">Priority</label>
+                                <select class="w-full px-3 py-2 border border-input rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                                    <option value="low" data-mock="true">Low - Can wait a few days</option>
+                                    <option value="medium" data-mock="true">Medium - Needs attention soon</option>
+                                    <option value="high" data-mock="true">High - Urgent issue</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Title -->
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-2">Request Title</label>
+                                <input type="text" class="w-full px-3 py-2 border border-input rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Brief description of the issue" required data-mock="true">
+                            </div>
+                            
+                            <!-- Description -->
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-2">Detailed Description</label>
+                                <textarea rows="4" class="w-full px-3 py-2 border border-input rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Please provide as much detail as possible about the issue..." required data-mock="true"></textarea>
+                            </div>
+                            
+                            <!-- Photo Upload -->
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-2">Photos/Videos</label>
+                                <div class="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer" data-implementation="Should handle file upload with drag-and-drop">
+                                    <i class="fas fa-cloud-upload-alt text-3xl text-muted-foreground mb-2"></i>
+                                    <p class="text-muted-foreground">Click to upload or drag and drop</p>
+                                    <p class="text-sm text-muted-foreground mt-1">PNG, JPG, MP4 up to 50MB each</p>
+                                    <input type="file" class="hidden" multiple accept="image/*,video/*" data-implementation="Should handle multiple file uploads">
+                                </div>
+                            </div>
+                            
+                            <!-- Availability -->
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-2">Preferred Schedule</label>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs text-muted-foreground mb-1">Preferred Date</label>
+                                        <input type="date" class="w-full px-3 py-2 border border-input rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm" data-mock="true">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-muted-foreground mb-1">Preferred Time</label>
+                                        <select class="w-full px-3 py-2 border border-input rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm">
+                                            <option data-mock="true">Any time</option>
+                                            <option data-mock="true">Morning (8AM - 12PM)</option>
+                                            <option data-mock="true">Afternoon (12PM - 6PM)</option>
+                                            <option data-mock="true">Evening (6PM - 8PM)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <textarea rows="2" class="w-full mt-2 px-3 py-2 border border-input rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm" placeholder="Additional scheduling notes or access instructions..." data-mock="true"></textarea>
+                            </div>
+                            
+                            <!-- Form Actions -->
+                            <div class="flex justify-end space-x-3 pt-4 border-t border-border">
+                                <button type="button" class="px-4 py-2 border border-border text-foreground rounded-md hover:bg-muted transition-colors" data-event="click:closeModal">
+                                    Cancel
+                                </button>
+                                <button type="submit" class="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
+                                    Submit Request
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: NewRequestModal -->
+
+                <!-- MOBILE TECHNICIAN VIEW -->
+                <!-- @COMPONENT: TechnicianMobileView [optimized mobile interface for technicians] -->
+                <div id="technician-view" class="technician-mobile hidden">
+                    <div class="min-h-screen bg-background pb-20">
+                        
+                        <!-- Mobile Header -->
+                        <div class="sticky top-0 bg-card border-b border-border shadow-sm z-10">
+                            <div class="px-4 py-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h1 class="text-lg font-semibold text-foreground">My Tasks</h1>
+                                        <p class="text-sm text-muted-foreground" data-bind="technician.name" data-mock="true">Mike Johnson - HVAC Specialist</p>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <!-- Status indicator -->
+                                        <div class="flex items-center space-x-1">
+                                            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                            <span class="text-xs text-muted-foreground">Available</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Stats -->
+                        <div class="px-4 py-4">
+                            <div class="grid grid-cols-3 gap-4">
+                                <div class="bg-card rounded-lg p-4 text-center border border-border">
+                                    <p class="text-2xl font-bold text-foreground" data-bind="technicianStats.assigned" data-mock="true">3</p>
+                                    <p class="text-xs text-muted-foreground">Assigned</p>
+                                </div>
+                                <div class="bg-card rounded-lg p-4 text-center border border-border">
+                                    <p class="text-2xl font-bold text-foreground" data-bind="technicianStats.inProgress" data-mock="true">1</p>
+                                    <p class="text-xs text-muted-foreground">In Progress</p>
+                                </div>
+                                <div class="bg-card rounded-lg p-4 text-center border border-border">
+                                    <p class="text-2xl font-bold text-foreground" data-bind="technicianStats.completed" data-mock="true">8</p>
+                                    <p class="text-xs text-muted-foreground">Completed</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Task List -->
+                        <div class="px-4 space-y-4">
+                            <h2 class="font-semibold text-foreground">Today's Tasks</h2>
+                            
+                            <!-- @MAP: technicianTasks.map(task => ( -->
+                            <!-- Active Task -->
+                            <div class="bg-card rounded-lg border border-border p-4 shadow-sm">
+                                <div class="flex items-start justify-between mb-3">
+                                    <div class="flex-1">
+                                        <h3 class="font-medium text-foreground text-sm" data-mock="true">HVAC System Malfunction</h3>
+                                        <p class="text-xs text-muted-foreground" data-mock="true">Skyview Towers - Apt 12A</p>
+                                    </div>
+                                    <span class="text-xs px-2 py-1 rounded-full status-badge-in-progress" data-mock="true">In Progress</span>
+                                </div>
+                                
+                                <div class="space-y-2 mb-4">
+                                    <div class="flex items-center text-xs text-muted-foreground">
+                                        <i class="fas fa-clock mr-2"></i>
+                                        <span data-mock="true">Started: 2:00 PM</span>
+                                    </div>
+                                    <div class="flex items-center text-xs text-muted-foreground">
+                                        <i class="fas fa-map-marker-alt mr-2"></i>
+                                        <span data-mock="true">Unit 12A, 15th Floor</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex space-x-2">
+                                    <button class="flex-1 bg-primary text-primary-foreground py-2 px-3 rounded-md text-sm font-medium" data-implementation="Should open task update interface">
+                                        Update Progress
+                                    </button>
+                                    <button class="px-3 py-2 border border-border rounded-md text-sm" data-implementation="Should open camera for photo capture">
+                                        <i class="fas fa-camera"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Pending Task -->
+                            <div class="bg-card rounded-lg border border-border p-4 shadow-sm">
+                                <div class="flex items-start justify-between mb-3">
+                                    <div class="flex-1">
+                                        <h3 class="font-medium text-foreground text-sm" data-mock="true">Elevator Maintenance</h3>
+                                        <p class="text-xs text-muted-foreground" data-mock="true">Business Plaza - Main Lobby</p>
+                                    </div>
+                                    <span class="text-xs px-2 py-1 rounded-full status-badge-assigned" data-mock="true">Scheduled</span>
+                                </div>
+                                
+                                <div class="space-y-2 mb-4">
+                                    <div class="flex items-center text-xs text-muted-foreground">
+                                        <i class="fas fa-clock mr-2"></i>
+                                        <span data-mock="true">Scheduled: 4:00 PM</span>
+                                    </div>
+                                    <div class="flex items-center text-xs text-muted-foreground">
+                                        <i class="fas fa-map-marker-alt mr-2"></i>
+                                        <span data-mock="true">Main Lobby Elevator Bank</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex space-x-2">
+                                    <button class="flex-1 border border-border text-foreground py-2 px-3 rounded-md text-sm font-medium" data-implementation="Should start task and update status">
+                                        Start Task
+                                    </button>
+                                    <button class="px-3 py-2 border border-border rounded-md text-sm" data-implementation="Should open navigation to location">
+                                        <i class="fas fa-directions"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Completed Task -->
+                            <div class="bg-card rounded-lg border border-border p-4 shadow-sm opacity-75">
+                                <div class="flex items-start justify-between mb-3">
+                                    <div class="flex-1">
+                                        <h3 class="font-medium text-foreground text-sm" data-mock="true">Plumbing Repair</h3>
+                                        <p class="text-xs text-muted-foreground" data-mock="true">Garden Heights - Unit 45B</p>
+                                    </div>
+                                    <span class="text-xs px-2 py-1 rounded-full status-badge-completed" data-mock="true">Completed</span>
+                                </div>
+                                
+                                <div class="space-y-2 mb-4">
+                                    <div class="flex items-center text-xs text-muted-foreground">
+                                        <i class="fas fa-check mr-2"></i>
+                                        <span data-mock="true">Completed: 12:30 PM</span>
+                                    </div>
+                                    <div class="flex items-center text-xs text-muted-foreground">
+                                        <i class="fas fa-star mr-2"></i>
+                                        <span data-mock="true">Customer Approved</span>
+                                    </div>
+                                </div>
+                                
+                                <button class="w-full border border-border text-muted-foreground py-2 px-3 rounded-md text-sm" data-implementation="Should show task completion details">
+                                    View Details
+                                </button>
+                            </div>
+                            <!-- @END_MAP )) -->
+                        </div>
+                    </div>
+                    
+                    <!-- Mobile Bottom Navigation -->
+                    <div class="fixed bottom-0 left-0 right-0 bg-card border-t border-border">
+                        <div class="grid grid-cols-4 py-2">
+                            <button class="flex flex-col items-center py-2 text-primary" data-implementation="Should show task list">
+                                <i class="fas fa-tasks text-lg mb-1"></i>
+                                <span class="text-xs">Tasks</span>
+                            </button>
+                            <button class="flex flex-col items-center py-2 text-muted-foreground" data-implementation="Should show schedule calendar">
+                                <i class="fas fa-calendar text-lg mb-1"></i>
+                                <span class="text-xs">Schedule</span>
+                            </button>
+                            <button class="flex flex-col items-center py-2 text-muted-foreground" data-implementation="Should open camera for documentation">
+                                <i class="fas fa-camera text-lg mb-1"></i>
+                                <span class="text-xs">Camera</span>
+                            </button>
+                            <button class="flex flex-col items-center py-2 text-muted-foreground" data-implementation="Should show profile and settings">
+                                <i class="fas fa-user text-lg mb-1"></i>
+                                <span class="text-xs">Profile</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: TechnicianMobileView -->
+            </div>
+        </div>
+        <!-- @END_COMPONENT: MainApplicationShell -->
+    </div>
+
+    <script>
+        (function() {
+            // App state management
+            let currentView = 'auth';
+            let currentRole = 'tenant';
+            
+            // DOM elements
+            const authScreen = document.getElementById('auth-screen');
+            const mainApp = document.getElementById('main-app');
+            const roleSelector = document.getElementById('role-selector');
+            const newRequestModal = document.getElementById('new-request-modal');
+            
+            // View elements
+            const tenantView = document.getElementById('tenant-view');
+            const supervisorView = document.getElementById('supervisor-view');
+            const requestDetail = document.getElementById('request-detail');
+            const technicianView = document.getElementById('technician-view');
+            
+            // Initialize the application
+            function init() {
+                setupEventListeners();
+                showAuthScreen();
+            }
+            
+            function setupEventListeners() {
+                // Auth tab switching
+                document.querySelectorAll('.auth-tab').forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        const tabName = this.dataset.tab;
+                        switchAuthTab(tabName);
+                    });
+                });
+                
+                // Role selector
+                if (roleSelector) {
+                    roleSelector.addEventListener('change', function() {
+                        switchRole(this.value);
+                    });
+                }
+                
+                // Demo: Auto-login after 2 seconds
+                setTimeout(() => {
+                    showMainApp();
+                }, 2000);
+                
+                // New request modal
+                document.addEventListener('click', function(e) {
+                    if (e.target.closest('[data-event="click:createNewRequest"]')) {
+                        showNewRequestModal();
+                    }
+                    if (e.target.closest('[data-event="click:closeModal"]')) {
+                        hideNewRequestModal();
+                    }
+                });
+                
+                // Modal background click
+                if (newRequestModal) {
+                    newRequestModal.addEventListener('click', function(e) {
+                        if (e.target === this) {
+                            hideNewRequestModal();
+                        }
+                    });
+                }
+            }
+            
+            function switchAuthTab(tabName) {
+                // Update tab appearance
+                document.querySelectorAll('.auth-tab').forEach(tab => {
+                    tab.classList.remove('active', 'border-primary', 'text-primary');
+                    tab.classList.add('border-transparent', 'text-muted-foreground');
+                });
+                
+                const activeTab = document.querySelector(`[data-tab="${tabName}"]`);
+                activeTab.classList.add('active', 'border-primary', 'text-primary');
+                activeTab.classList.remove('border-transparent', 'text-muted-foreground');
+                
+                // Show/hide forms
+                const signinForm = document.getElementById('signin-form');
+                const signupForm = document.getElementById('signup-form');
+                
+                if (tabName === 'signin') {
+                    signinForm.classList.remove('hidden');
+                    signupForm.classList.add('hidden');
+                } else {
+                    signinForm.classList.add('hidden');
+                    signupForm.classList.remove('hidden');
+                }
+            }
+            
+            function showAuthScreen() {
+                authScreen.classList.remove('hidden');
+                mainApp.classList.add('hidden');
+                currentView = 'auth';
+            }
+            
+            function showMainApp() {
+                authScreen.classList.add('hidden');
+                mainApp.classList.remove('hidden');
+                currentView = 'main';
+                switchRole(currentRole);
+            }
+            
+            function switchRole(role) {
+                currentRole = role;
+                
+                // Hide all views
+                tenantView.classList.add('hidden');
+                supervisorView.classList.add('hidden');
+                requestDetail.classList.add('hidden');
+                technicianView.classList.add('hidden');
+                
+                // Show appropriate view
+                switch(role) {
+                    case 'tenant':
+                        tenantView.classList.remove('hidden');
+                        break;
+                    case 'supervisor':
+                        supervisorView.classList.remove('hidden');
+                        break;
+                    case 'technician':
+                        technicianView.classList.remove('hidden');
+                        break;
+                    default:
+                        tenantView.classList.remove('hidden');
+                }
+                
+                // Update role selector
+                if (roleSelector) {
+                    roleSelector.value = role;
+                }
+            }
+            
+            function showNewRequestModal() {
+                newRequestModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            function hideNewRequestModal() {
+                newRequestModal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+            
+            // TODO: Implement business logic, API calls, and state management
+            // TODO: Add WebSocket connections for real-time updates
+            // TODO: Implement photo/video upload functionality
+            // TODO: Add notification system
+            // TODO: Implement role-based access control
+            
+            // Initialize the app
+            init();
+        })();
+    </script>
+</body>
+</html>

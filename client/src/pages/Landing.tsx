@@ -1,184 +1,469 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Users } from "lucide-react";
+import { useState } from 'react';
+import { Link } from 'wouter';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAuth } from '@/hooks/useAuth';
+import { Check, Star, Building, Users, Clock, Shield, Zap } from 'lucide-react';
 
 export default function Landing() {
+  const { signIn, signUp, signInWithGoogle } = useAuth();
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [role, setRole] = useState('tenant');
+  const [inviteCode, setInviteCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleGoogleSignIn = () => {
-    window.location.href = "/api/login";
-  };
-
-  const handleEmailSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsLoading(true);
-    // For now, redirect to Replit auth - email auth can be implemented later
-    setTimeout(() => {
-      window.location.href = "/api/login";
-    }, 1000);
+    setError('');
+
+    try {
+      if (isSignUp) {
+        // Validate invite code for tenant role
+        if (role === 'tenant' && !inviteCode.trim()) {
+          setError('Invite code is required for tenant registration');
+          return;
+        }
+
+        const { error } = await signUp(email, password, {
+          firstName,
+          lastName,
+          role,
+          inviteCode: role === 'tenant' ? inviteCode : undefined,
+        });
+        
+        if (error) {
+          setError(error.message);
+        } else {
+          setError('');
+          alert('Account created! Please check your email to verify your account before signing in.');
+        }
+      } else {
+        const { error } = await signIn(email, password);
+        if (error) {
+          if (error.message.includes('email-not-verified') || error.message.includes('not verified')) {
+            setError('Please verify your email address before signing in. Check your inbox for the verification link.');
+          } else if (error.message.includes('user-not-found') || error.message.includes('wrong-password')) {
+            setError('Invalid email or password. Please check your credentials and try again.');
+          } else {
+            setError(error.message);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Auth error:', error);
+      setError('Failed to connect to authentication service. Please check your internet connection and try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await signInWithGoogle();
+      if (error) {
+        alert(error.message);
+      }
+    } catch (error) {
+      console.error('Google sign-in error:', error);
+      alert('Failed to connect to Google sign-in service. Please check your internet connection and try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const pricingTiers = [
+    {
+      name: 'Basic',
+      price: '$29',
+      period: '/month',
+      description: 'Perfect for small FMCs',
+      features: [
+        'Up to 5 buildings',
+        'Up to 10 users',
+        'Basic maintenance tracking',
+        'Email notifications',
+        'Mobile app access',
+      ],
+      popular: false,
+    },
+    {
+      name: 'Professional',
+      price: '$79',
+      period: '/month',
+      description: 'Ideal for growing FMCs',
+      features: [
+        'Up to 25 buildings',
+        'Up to 50 users',
+        'Advanced analytics',
+        'Push notifications',
+        'WhatsApp integration',
+        'Custom workflows',
+        'Priority support',
+      ],
+      popular: true,
+    },
+    {
+      name: 'Enterprise',
+      price: '$199',
+      period: '/month',
+      description: 'For large FMC organizations',
+      features: [
+        'Unlimited buildings',
+        'Unlimited users',
+        'Advanced reporting',
+        'API access',
+        'Custom integrations',
+        'Dedicated support',
+        'SLA guarantees',
+      ],
+      popular: false,
+    },
+  ];
+
+  const features = [
+    {
+      icon: Building,
+      title: 'Multi-Building Management',
+      description: 'Manage multiple properties from a single dashboard with ease.',
+    },
+    {
+      icon: Users,
+      title: 'Role-Based Access',
+      description: 'Secure access control for tenants, technicians, and supervisors.',
+    },
+    {
+      icon: Clock,
+      title: 'Real-Time Tracking',
+      description: 'Track maintenance requests in real-time with status updates.',
+    },
+    {
+      icon: Shield,
+      title: 'Quality Assurance',
+      description: 'Photo/video documentation and OTP verification for work completion.',
+    },
+    {
+      icon: Zap,
+      title: 'Smart Notifications',
+      description: 'Multi-channel notifications via email, SMS, WhatsApp, and push.',
+    },
+  ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent">
-      <div className="w-full max-w-md mx-4">
-        <Card className="shadow-lg">
-          <CardContent className="p-8 space-y-6">
-            {/* Logo and branding */}
-            <div className="text-center space-y-2">
-              <div className="w-16 h-16 bg-primary rounded-full mx-auto flex items-center justify-center mb-4">
-                <Settings className="text-2xl text-primary-foreground" size={32} />
-              </div>
-              <h1 className="text-2xl font-bold text-foreground">Zariya FMC</h1>
-              <p className="text-muted-foreground">Facility Management Platform</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Navigation */}
+      <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <Building className="h-8 w-8 text-blue-600" />
+              <span className="ml-2 text-xl font-bold text-gray-900">Zariya FMC</span>
             </div>
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost" onClick={() => { setIsSignUp(false); setShowModal(true); }}>
+                Sign In
+              </Button>
+              <Button onClick={() => { setIsSignUp(true); setShowModal(true); }}>
+                Get Started
+              </Button>
+            </div>
+          </div>
+        </div>
+      </nav>
 
-            <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin" data-testid="tab-signin">Sign In</TabsTrigger>
-                <TabsTrigger value="signup" data-testid="tab-signup">Sign Up</TabsTrigger>
-              </TabsList>
+      {/* Hero Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto text-center">
+          <h1 className="text-4xl sm:text-6xl font-bold text-gray-900 mb-6">
+            Transform Your
+            <span className="text-blue-600"> Facility Management</span>
+          </h1>
+          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            Streamline maintenance workflows, improve response times, and enhance transparency 
+            with our comprehensive facility management platform.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" onClick={() => { setIsSignUp(true); setShowModal(true); }}>
+              Start Free Trial
+            </Button>
+            <Button size="lg" variant="outline" onClick={() => document.getElementById('pricing')?.scrollIntoView()}>
+              View Pricing
+            </Button>
+          </div>
+        </div>
+      </section>
 
-              <TabsContent value="signin" className="space-y-4">
-                {/* Google Sign-in */}
-                <Button
-                  onClick={handleGoogleSignIn}
-                  variant="outline"
-                  className="w-full"
-                  data-testid="button-google-signin"
-                >
-                  <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                  </svg>
-                  Continue with Replit
-                </Button>
+      {/* Features Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Everything You Need to Manage Facilities
+            </h2>
+            <p className="text-xl text-gray-600">
+              Powerful features designed for modern facility management companies
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <Card key={index} className="text-center">
+                <CardHeader>
+                  <div className="mx-auto w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                    <feature.icon className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-base">
+                    {feature.description}
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
 
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-border"></div>
+      {/* Pricing Section */}
+      <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Simple, Transparent Pricing
+            </h2>
+            <p className="text-xl text-gray-600">
+              Choose the plan that fits your organization's needs
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {pricingTiers.map((tier, index) => (
+              <Card key={index} className={`relative ${tier.popular ? 'border-blue-500 shadow-lg' : ''}`}>
+                {tier.popular && (
+                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-600">
+                    Most Popular
+                  </Badge>
+                )}
+                <CardHeader className="text-center">
+                  <CardTitle className="text-2xl">{tier.name}</CardTitle>
+                  <div className="flex items-baseline justify-center">
+                    <span className="text-4xl font-bold">{tier.price}</span>
+                    <span className="text-gray-600 ml-1">{tier.period}</span>
                   </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-card text-muted-foreground">or</span>
-                  </div>
-                </div>
-
-                {/* Email Form */}
-                <form onSubmit={handleEmailSignIn} className="space-y-4">
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="Enter your email"
-                      required
-                      data-testid="input-email"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="password">Password</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="Enter your password"
-                      required
-                      data-testid="input-password"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="inviteCode">Invite Code (FMC Access)</Label>
-                    <Input
-                      id="inviteCode"
-                      type="text"
-                      placeholder="Optional: Enter invite code"
-                      data-testid="input-invite-code"
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={isLoading}
-                    data-testid="button-signin"
+                  <CardDescription className="text-base">
+                    {tier.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3">
+                    {tier.features.map((feature, featureIndex) => (
+                      <li key={featureIndex} className="flex items-center">
+                        <Check className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button 
+                    className="w-full mt-6" 
+                    variant={tier.popular ? 'default' : 'outline'}
+                    onClick={() => { setIsSignUp(true); setShowModal(true); }}
                   >
-                    {isLoading ? "Signing in..." : "Sign In"}
+                    Get Started
                   </Button>
-                </form>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
 
-                <div className="text-center">
-                  <a href="#" className="text-sm text-primary hover:underline">
-                    Forgot your password?
-                  </a>
+      {/* Auth Modal */}
+      {showModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={() => setShowModal(false)}
+        >
+        <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+          <CardHeader className="text-center relative">
+            <button 
+              onClick={() => setShowModal(false)}
+              className="absolute right-0 top-0 p-2 hover:bg-gray-100 rounded-full"
+              aria-label="Close modal"
+            >
+              ✕
+            </button>
+            <CardTitle className="text-2xl">
+              {isSignUp ? 'Create Account' : 'Sign In'}
+            </CardTitle>
+            <CardDescription>
+              {isSignUp ? 'Join Zariya FMC to streamline your facility management' : 'Welcome back to Zariya FMC'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleAuth} className="space-y-4">
+              {error && (
+                <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+                  {error}
                 </div>
-              </TabsContent>
-
-              <TabsContent value="signup" className="space-y-4">
-                <form onSubmit={handleEmailSignIn} className="space-y-4">
+              )}
+              
+              {isSignUp && (
+                <>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="firstName">First Name</Label>
                       <Input
                         id="firstName"
-                        type="text"
-                        required
-                        data-testid="input-firstname"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        required={isSignUp}
                       />
                     </div>
                     <div>
                       <Label htmlFor="lastName">Last Name</Label>
                       <Input
                         id="lastName"
-                        type="text"
-                        required
-                        data-testid="input-lastname"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        required={isSignUp}
                       />
                     </div>
                   </div>
+                  
                   <div>
-                    <Label htmlFor="signupEmail">Email</Label>
-                    <Input
-                      id="signupEmail"
-                      type="email"
-                      required
-                      data-testid="input-signup-email"
-                    />
+                    <Label htmlFor="role">Role</Label>
+                    <Select value={role} onValueChange={setRole}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="tenant">Tenant</SelectItem>
+                        <SelectItem value="fmc_supervisor">FMC Supervisor</SelectItem>
+                        <SelectItem value="fmc_technician">FMC Technician</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="master">Master Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div>
-                    <Label htmlFor="signupPassword">Password</Label>
-                    <Input
-                      id="signupPassword"
-                      type="password"
-                      required
-                      data-testid="input-signup-password"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      required
-                      data-testid="input-confirm-password"
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={isLoading}
-                    data-testid="button-signup"
-                  >
-                    {isLoading ? "Creating Account..." : "Create Account"}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
+                  
+                  {role === 'tenant' && (
+                    <div>
+                      <Label htmlFor="inviteCode">Invite Code</Label>
+                      <Input
+                        id="inviteCode"
+                        value={inviteCode}
+                        onChange={(e) => setInviteCode(e.target.value)}
+                        placeholder="Enter your invite code"
+                        required
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+              
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? 'Loading...' : (isSignUp ? 'Create Account' : 'Sign In')}
+              </Button>
+            </form>
+            
+            <div className="mt-4">
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={handleGoogleSignIn}
+                disabled={isLoading}
+              >
+                Continue with Google
+              </Button>
+            </div>
+            
+            <div className="mt-4 text-center">
+              <button
+                type="button"
+                onClick={() => setIsSignUp(!isSignUp)}
+                className="text-blue-600 hover:underline"
+              >
+                {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+              </button>
+            </div>
           </CardContent>
         </Card>
       </div>
+      )}
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center mb-4">
+                <Building className="h-8 w-8 text-blue-400" />
+                <span className="ml-2 text-xl font-bold">Zariya FMC</span>
+              </div>
+              <p className="text-gray-400">
+                Transforming facility management with modern technology and seamless workflows.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-4">Product</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white">Features</a></li>
+                <li><a href="#" className="hover:text-white">Pricing</a></li>
+                <li><a href="#" className="hover:text-white">API</a></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-4">Company</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white">About</a></li>
+                <li><a href="#" className="hover:text-white">Blog</a></li>
+                <li><a href="#" className="hover:text-white">Careers</a></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-4">Support</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white">Help Center</a></li>
+                <li><a href="#" className="hover:text-white">Contact</a></li>
+                <li><a href="#" className="hover:text-white">Status</a></li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p>&copy; 2024 Zariya FMC. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

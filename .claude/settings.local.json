@@ -41,7 +41,11 @@
       "Bash(npm run dev:*)",
       "Bash(kill:*)",
       "Bash(PORT=3001 npm run dev)",
-      "mcp__browsertools__getConsoleErrors"
+      "mcp__browsertools__getConsoleErrors",
+      "mcp__serena__execute_shell_command",
+      "mcp__serena__insert_before_symbol",
+      "mcp__serena__get_symbols_overview",
+      "mcp__serena__insert_after_symbol"
     ],
     "deny": [],
     "ask": []

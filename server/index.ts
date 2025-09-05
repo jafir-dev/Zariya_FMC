@@ -1,10 +1,35 @@
 import express, { type Request, Response, NextFunction } from "express";
+import cors from "cors";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { errorHandler, logError } from "./middleware/errorHandler";
+import { 
+  securityHeaders, 
+  apiRateLimit, 
+  corsOptions, 
+  sanitizeInput, 
+  sqlInjectionProtection, 
+  securityLogger,
+  requestSizeLimit 
+} from "./middleware/security";
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+
+// Apply security middleware first
+app.use(securityHeaders);
+app.use(cors(corsOptions));
+app.use(securityLogger);
+
+// Request parsing with size limits
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+
+// Input sanitization and SQL injection protection
+app.use(sanitizeInput);
+app.use(sqlInjectionProtection);
+
+// Apply rate limiting to API routes
+app.use('/api', apiRateLimit);
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -39,13 +64,8 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
-  });
+  // Use the comprehensive error handler
+  app.use(errorHandler);
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
@@ -62,8 +82,6 @@ app.use((req, res, next) => {
   server.listen({
     port,
     host: "0.0.0.0",
-    // Only use reusePort on Replit
-    ...(process.env.REPL_ID ? { reusePort: true } : {}),
   }, () => {
     log(`serving on port ${port}`);
   });

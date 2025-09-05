@@ -29,10 +29,10 @@ export interface IStorage {
   // User operations (mandatory for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
-  getUsersByRole(role: string, tenantId: string): Promise<User[]>;
+  getUsersByRole(role: string, fmcOrganizationId: string): Promise<User[]>;
   
   // Building operations
-  getBuildings(tenantId: string): Promise<Building[]>;
+  getBuildings(fmcOrganizationId: string): Promise<Building[]>;
   createBuilding(building: InsertBuilding): Promise<Building>;
   updateBuilding(id: string, building: Partial<InsertBuilding>): Promise<Building>;
   
@@ -52,7 +52,7 @@ export interface IStorage {
     timeline: (RequestTimeline & { user: User })[];
   }) | undefined>;
   getMaintenanceRequests(filters: {
-    tenantId?: string;
+    fmcOrganizationId?: string;
     userId?: string;
     assignedTechnicianId?: string;
     supervisorId?: string;
@@ -81,6 +81,7 @@ export interface IStorage {
   createInviteCode(inviteCode: InsertInviteCode): Promise<InviteCode>;
   validateInviteCode(code: string): Promise<InviteCode | undefined>;
   useInviteCode(code: string, userId: string): Promise<InviteCode>;
+  getInviteCodesByOrganization(fmcOrganizationId: string): Promise<(InviteCode & { createdByUser: User })[]>;
   
   // Dashboard statistics
   getTenantStats(userId: string): Promise<{
@@ -89,7 +90,7 @@ export interface IStorage {
     totalRequests: number;
   }>;
   
-  getSupervisorStats(supervisorId: string, tenantId: string): Promise<{
+  getSupervisorStats(supervisorId: string, fmcOrganizationId: string): Promise<{
     openRequests: number;
     activeTechnicians: number;
     avgResponseTimeHours: number;
@@ -125,19 +126,19 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getUsersByRole(role: string, tenantId: string): Promise<User[]> {
+  async getUsersByRole(role: string, fmcOrganizationId: string): Promise<User[]> {
     return await db
       .select()
       .from(users)
-      .where(and(eq(users.role, role as any), eq(users.tenantId, tenantId), eq(users.isActive, true)));
+      .where(and(eq(users.role, role as any), eq(users.fmcOrganizationId, fmcOrganizationId), eq(users.isActive, true)));
   }
 
   // Building operations
-  async getBuildings(tenantId: string): Promise<Building[]> {
+  async getBuildings(fmcOrganizationId: string): Promise<Building[]> {
     return await db
       .select()
       .from(buildings)
-      .where(and(eq(buildings.tenantId, tenantId), eq(buildings.isActive, true)))
+      .where(and(eq(buildings.fmcOrganizationId, fmcOrganizationId), eq(buildings.isActive, true)))
       .orderBy(buildings.name);
   }
 
@@ -242,7 +243,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMaintenanceRequests(filters: {
-    tenantId?: string;
+    fmcOrganizationId?: string;
     userId?: string;
     assignedTechnicianId?: string;
     supervisorId?: string;
@@ -264,8 +265,8 @@ export class DatabaseStorage implements IStorage {
 
     const conditions = [];
 
-    if (filters.tenantId) {
-      conditions.push(eq(maintenanceRequests.tenantId, filters.tenantId));
+    if (filters.fmcOrganizationId) {
+      conditions.push(eq(maintenanceRequests.fmcOrganizationId, filters.fmcOrganizationId));
     }
     if (filters.userId) {
       conditions.push(eq(properties.userId, filters.userId));
@@ -398,6 +399,20 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
+  async getInviteCodesByOrganization(fmcOrganizationId: string): Promise<(InviteCode & { createdByUser: User })[]> {
+    const results = await db
+      .select()
+      .from(inviteCodes)
+      .innerJoin(users, eq(inviteCodes.createdBy, users.id))
+      .where(eq(inviteCodes.fmcOrganizationId, fmcOrganizationId))
+      .orderBy(desc(inviteCodes.createdAt));
+
+    return results.map(row => ({
+      ...row.invite_codes,
+      createdByUser: row.users
+    }));
+  }
+
   // Dashboard statistics
   async getTenantStats(userId: string): Promise<{
     pendingRequests: number;
@@ -443,7 +458,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getSupervisorStats(supervisorId: string, tenantId: string): Promise<{
+  async getSupervisorStats(supervisorId: string, fmcOrganizationId: string): Promise<{
     openRequests: number;
     activeTechnicians: number;
     avgResponseTimeHours: number;
@@ -453,7 +468,7 @@ export class DatabaseStorage implements IStorage {
       .select({ count: count() })
       .from(maintenanceRequests)
       .where(and(
-        eq(maintenanceRequests.tenantId, tenantId),
+        eq(maintenanceRequests.fmcOrganizationId, fmcOrganizationId),
         sql`status IN ('open', 'assigned', 'in_progress')`
       ));
 
@@ -462,14 +477,14 @@ export class DatabaseStorage implements IStorage {
       .from(users)
       .where(and(
         eq(users.role, "fmc_technician"),
-        eq(users.tenantId, tenantId),
+        eq(users.fmcOrganizationId, fmcOrganizationId),
         eq(users.isActive, true)
       ));
 
     const [buildingCount] = await db
       .select({ count: count() })
       .from(buildings)
-      .where(and(eq(buildings.tenantId, tenantId), eq(buildings.isActive, true)));
+      .where(and(eq(buildings.fmcOrganizationId, fmcOrganizationId), eq(buildings.isActive, true)));
 
     return {
       openRequests: openCount.count || 0,

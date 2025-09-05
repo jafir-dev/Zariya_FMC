@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
 import Dashboard from "@/pages/Dashboard";
@@ -14,6 +15,8 @@ import TechnicianView from "@/pages/TechnicianView";
 import RequestDetail from "@/pages/RequestDetail";
 import NewRequest from "@/pages/NewRequest";
 import Profile from "@/pages/Profile";
+import AdminDashboard from "@/pages/AdminDashboard";
+import ReportingDashboard from "@/pages/ReportingDashboard";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -34,77 +37,27 @@ function Router() {
         <>
           {/* Common Routes for all authenticated users */}
           <Route path="/profile" component={Profile} />
+          <Route path="/requests/new" component={NewRequest} />
+          <Route path="/requests/:id" component={RequestDetail} />
           
-          {/* Admin Routes */}
-          {user?.role === 'admin' && (
-            <>
-              <Route path="/" component={MasterDashboard} />
-              <Route path="/admin" component={MasterDashboard} />
-            </>
+          {/* Analytics Dashboard - Admin and Supervisors only */}
+          {['admin', 'fmc_head', 'fmc_supervisor'].includes(user?.role || '') && (
+            <Route path="/reports" component={ReportingDashboard} />
           )}
           
-          {/* FMC Head Routes */}
-          {user?.role === 'fmc_head' && (
-            <>
-              <Route path="/" component={MasterDashboard} />
-              <Route path="/admin" component={MasterDashboard} />
-            </>
+          {/* Admin Dashboard - Admin and FMC Head only */}
+          {['admin', 'fmc_head'].includes(user?.role || '') && (
+            <Route path="/admin" component={AdminDashboard} />
           )}
           
-          {/* Tenant Routes */}
-          {user?.role === 'tenant' && (
-            <>
-              <Route path="/" component={TenantDashboard} />
-              <Route path="/tenant" component={TenantDashboard} />
-              <Route path="/requests/new" component={NewRequest} />
-              <Route path="/requests/:id" component={RequestDetail} />
-            </>
-          )}
+          {/* Role-based dashboard routing using the universal Dashboard component */}
+          <Route path="/" component={Dashboard} />
           
-          {/* FMC Supervisor Routes */}
-          {user?.role === 'fmc_supervisor' && (
-            <>
-              <Route path="/" component={SupervisorDashboard} />
-              <Route path="/supervisor" component={SupervisorDashboard} />
-              <Route path="/requests/:id" component={RequestDetail} />
-            </>
-          )}
-          
-          {/* FMC Technician Routes */}
-          {user?.role === 'fmc_technician' && (
-            <>
-              <Route path="/" component={TechnicianView} />
-              <Route path="/technician" component={TechnicianView} />
-              <Route path="/requests/:id" component={RequestDetail} />
-            </>
-          )}
-          
-          {/* Building Owner Routes */}
-          {user?.role === 'building_owner' && (
-            <>
-              <Route path="/" component={TenantDashboard} />
-              <Route path="/owner" component={TenantDashboard} />
-              <Route path="/requests/:id" component={RequestDetail} />
-            </>
-          )}
-          
-          {/* FMC Procurement Routes */}
-          {user?.role === 'fmc_procurement' && (
-            <>
-              <Route path="/" component={SupervisorDashboard} />
-              <Route path="/procurement" component={SupervisorDashboard} />
-              <Route path="/requests/:id" component={RequestDetail} />
-            </>
-          )}
-          
-          {/* Third Party Support Routes */}
-          {user?.role === 'third_party_support' && (
-            <>
-              <Route path="/" component={TechnicianView} />
-              <Route path="/support" component={TechnicianView} />
-              <Route path="/requests/:id" component={RequestDetail} />
-            </>
-          )}
+          {/* Legacy role-specific routes for backward compatibility */}
+          <Route path="/tenant" component={TenantDashboard} />
+          <Route path="/supervisor" component={SupervisorDashboard} />
+          <Route path="/technician" component={TechnicianView} />
+          <Route path="/master" component={MasterDashboard} />
         </>
       )}
       <Route component={NotFound} />
@@ -115,10 +68,12 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
+      <ErrorBoundary>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </ErrorBoundary>
     </QueryClientProvider>
   );
 }

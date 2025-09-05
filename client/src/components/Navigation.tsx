@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Bell, Settings, ChevronDown, User } from "lucide-react";
+import { Bell, Settings, ChevronDown, User, BarChart3, Shield } from "lucide-react";
 import NotificationCenter from "./NotificationCenter";
 import {
   DropdownMenu,
@@ -67,6 +67,34 @@ export default function Navigation() {
                 <Settings className="text-sm text-primary-foreground" size={16} />
               </div>
               <span className="ml-2 text-xl font-bold text-foreground">Zariya FMC</span>
+            </div>
+
+            {/* Navigation Links */}
+            <div className="hidden md:flex items-center space-x-1">
+              {['admin', 'fmc_head', 'fmc_supervisor'].includes(user?.role || '') && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setLocation("/reports")}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <BarChart3 size={16} className="mr-2" />
+                    Analytics
+                  </Button>
+                  {user?.role === 'admin' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setLocation("/admin")}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <Shield size={16} className="mr-2" />
+                      Admin
+                    </Button>
+                  )}
+                </>
+              )}
             </div>
 
             {/* Role Selector - Only show if user has multiple roles */}

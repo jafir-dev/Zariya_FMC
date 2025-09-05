@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/hooks/useAuth';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -39,46 +42,17 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-interface Premise {
+interface Property {
   id: string;
-  name: string;
-  code: string;
-  address: string;
-  status: 'active' | 'inactive' | 'expired' | 'pending';
-  contractExpiry: string;
-  type: 'residential' | 'commercial' | 'industrial';
-  inviteCode?: string;
+  unitNumber: string;
+  building: {
+    id: string;
+    name: string;
+    address: string;
+  };
+  contractExpiryDate?: string;
+  isActive: boolean;
 }
-
-const mockPremises: Premise[] = [
-  {
-    id: '1',
-    name: 'Apartment 4B',
-    code: 'SKY001',
-    address: 'Skyline Towers, Downtown',
-    status: 'active',
-    contractExpiry: '2024-12-31',
-    type: 'residential',
-  },
-  {
-    id: '2',
-    name: 'Office Suite 201',
-    code: 'BP002',
-    address: 'Business Park, Tech District',
-    status: 'active',
-    contractExpiry: '2025-06-30',
-    type: 'commercial',
-  },
-  {
-    id: '3',
-    name: 'Warehouse Unit A',
-    code: 'IND003',
-    address: 'Industrial Zone, North Area',
-    status: 'expired',
-    contractExpiry: '2024-01-15',
-    type: 'industrial',
-  },
-];
 
 interface PremiseSelectorProps {
   selectedPremiseId?: string;
@@ -91,70 +65,58 @@ export default function PremiseSelector({
   onPremiseChange,
   showAll = false 
 }: PremiseSelectorProps) {
-  const [premises] = useState<Premise[]>(mockPremises);
-  const [selectedPremise, setSelectedPremise] = useState<Premise | null>(null);
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [selectedPremise, setSelectedPremise] = useState<Property | null>(null);
+
+  const { data: properties = [] } = useQuery({
+    queryKey: ['/api/properties'],
+    enabled: !!user,
+  });
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const { toast } = useToast();
 
-  // Filter premises based on showAll prop
-  const availablePremises = showAll 
-    ? premises 
-    : premises.filter(p => p.status === 'active');
+  // Filter properties based on showAll prop
+  const availableProperties = showAll 
+    ? properties 
+    : properties.filter((p: Property) => p.isActive);
 
   useEffect(() => {
     if (selectedPremiseId) {
-      const premise = premises.find(p => p.id === selectedPremiseId);
-      setSelectedPremise(premise || null);
-    } else if (availablePremises.length > 0) {
-      const firstActive = availablePremises[0];
+      const property = properties.find((p: Property) => p.id === selectedPremiseId);
+      setSelectedPremise(property || null);
+    } else if (availableProperties.length > 0) {
+      const firstActive = availableProperties[0];
       setSelectedPremise(firstActive);
       onPremiseChange(firstActive.id);
     }
-  }, [selectedPremiseId, premises]);
+  }, [selectedPremiseId, properties]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'default';
-      case 'expired':
-        return 'destructive';
-      case 'pending':
-        return 'secondary';
-      default:
-        return 'outline';
-    }
+  const getStatusColor = (isActive: boolean, contractExpiry?: string) => {
+    if (!isActive) return 'destructive';
+    if (contractExpiry && new Date(contractExpiry) < new Date()) return 'destructive';
+    return 'default';
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <CheckCircle className="w-3 h-3" />;
-      case 'expired':
-        return <AlertTriangle className="w-3 h-3" />;
-      default:
-        return null;
+  const getStatusIcon = (isActive: boolean, contractExpiry?: string) => {
+    if (!isActive || (contractExpiry && new Date(contractExpiry) < new Date())) {
+      return <AlertTriangle className="w-3 h-3" />;
     }
+    return <CheckCircle className="w-3 h-3" />;
   };
 
-  const getPremiseTypeDisplay = (type: string) => {
-    switch (type) {
-      case 'residential':
-        return 'Residential';
-      case 'commercial':
-        return 'Commercial';
-      case 'industrial':
-        return 'Industrial';
-      default:
-        return type;
-    }
+  const getStatusText = (isActive: boolean, contractExpiry?: string) => {
+    if (!isActive) return 'inactive';
+    if (contractExpiry && new Date(contractExpiry) < new Date()) return 'expired';
+    return 'active';
   };
 
   const handlePremiseSelect = (premiseId: string) => {
-    const premise = premises.find(p => p.id === premiseId);
-    if (premise && premise.status === 'active') {
-      setSelectedPremise(premise);
+    const property = properties.find((p: Property) => p.id === premiseId);
+    if (property && property.isActive) {
+      setSelectedPremise(property);
       onPremiseChange(premiseId);
     }
   };
@@ -172,20 +134,39 @@ export default function PremiseSelector({
     setIsValidating(true);
     
     try {
-      // TODO: Implement API call to validate and link invite code
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      
+      // First validate the invite code
+      const validateResponse = await fetch('/api/auth/validate-invite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code: inviteCode.trim() }),
+        credentials: 'include',
+      });
+
+      if (!validateResponse.ok) {
+        throw new Error('Invalid or expired invite code');
+      }
+
+      const validationData = await validateResponse.json();
+
+      // If validation successful, the user will need to register or link their account
+      // For now, we'll show success and refresh the properties
       toast({
-        title: 'Property Added',
-        description: 'The property has been successfully linked to your account.',
+        title: 'Invite Code Validated',
+        description: `Valid invite code for ${validationData.role} role. Contact support to complete property linking.`,
       });
       
       setInviteCode('');
       setInviteDialogOpen(false);
+      
+      // Refresh properties query to get any newly linked properties
+      queryClient.invalidateQueries({ queryKey: ['/api/properties'] });
+      
     } catch (error) {
       toast({
         title: 'Invalid Code',
-        description: 'The invite code is invalid or has expired.',
+        description: error instanceof Error ? error.message : 'The invite code is invalid or has expired.',
         variant: 'destructive',
       });
     } finally {
@@ -193,7 +174,7 @@ export default function PremiseSelector({
     }
   };
 
-  if (availablePremises.length === 0) {
+  if (availableProperties.length === 0) {
     return (
       <Card className="border-dashed">
         <CardContent className="flex flex-col items-center justify-center py-8">
@@ -248,8 +229,8 @@ export default function PremiseSelector({
     );
   }
 
-  if (availablePremises.length === 1) {
-    const premise = availablePremises[0];
+  if (availableProperties.length === 1) {
+    const property = availableProperties[0];
     return (
       <Card className="border-none shadow-none bg-transparent">
         <CardContent className="p-0">
@@ -259,13 +240,13 @@ export default function PremiseSelector({
             </div>
             <div className="flex-1">
               <div className="flex items-center space-x-2">
-                <h3 className="font-semibold text-sm">{premise.name}</h3>
-                <Badge variant={getStatusColor(premise.status)} className="text-xs">
-                  {getStatusIcon(premise.status)}
-                  <span className="ml-1">{premise.status}</span>
+                <h3 className="font-semibold text-sm">{property.building.name} - {property.unitNumber}</h3>
+                <Badge variant={getStatusColor(property.isActive, property.contractExpiryDate)} className="text-xs">
+                  {getStatusIcon(property.isActive, property.contractExpiryDate)}
+                  <span className="ml-1">{getStatusText(property.isActive, property.contractExpiryDate)}</span>
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground">{premise.address}</p>
+              <p className="text-xs text-muted-foreground">{property.building.address}</p>
             </div>
           </div>
         </CardContent>
@@ -282,11 +263,11 @@ export default function PremiseSelector({
               <Building className="w-4 h-4" />
               <div className="text-left">
                 <div className="text-sm font-medium">
-                  {selectedPremise?.name || 'Select Property'}
+                  {selectedPremise ? `${selectedPremise.building.name} - ${selectedPremise.unitNumber}` : 'Select Property'}
                 </div>
                 {selectedPremise && (
                   <div className="text-xs text-muted-foreground">
-                    {selectedPremise.code}
+                    {selectedPremise.building.address}
                   </div>
                 )}
               </div>
@@ -295,12 +276,12 @@ export default function PremiseSelector({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-80" align="start">
-          {availablePremises.map((premise) => (
+          {availableProperties.map((property: Property) => (
             <DropdownMenuItem 
-              key={premise.id}
-              onClick={() => handlePremiseSelect(premise.id)}
+              key={property.id}
+              onClick={() => handlePremiseSelect(property.id)}
               className="cursor-pointer p-3"
-              disabled={premise.status !== 'active'}
+              disabled={!property.isActive}
             >
               <div className="flex items-start space-x-3 w-full">
                 <div className="p-2 bg-primary/10 rounded-lg flex-shrink-0">
@@ -308,27 +289,23 @@ export default function PremiseSelector({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-semibold">{premise.name}</h4>
-                    <Badge variant={getStatusColor(premise.status)} className="text-xs">
-                      {getStatusIcon(premise.status)}
-                      <span className="ml-1">{premise.status}</span>
+                    <h4 className="text-sm font-semibold">{property.building.name} - {property.unitNumber}</h4>
+                    <Badge variant={getStatusColor(property.isActive, property.contractExpiryDate)} className="text-xs">
+                      {getStatusIcon(property.isActive, property.contractExpiryDate)}
+                      <span className="ml-1">{getStatusText(property.isActive, property.contractExpiryDate)}</span>
                     </Badge>
                   </div>
                   <div className="space-y-1">
-                    <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                      <Key className="w-3 h-3" />
-                      <span>{premise.code}</span>
-                      <span>•</span>
-                      <span>{getPremiseTypeDisplay(premise.type)}</span>
-                    </div>
                     <div className="flex items-center space-x-1 text-xs text-muted-foreground">
                       <MapPin className="w-3 h-3" />
-                      <span>{premise.address}</span>
+                      <span>{property.building.address}</span>
                     </div>
-                    <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-                      <Calendar className="w-3 h-3" />
-                      <span>Expires: {new Date(premise.contractExpiry).toLocaleDateString()}</span>
-                    </div>
+                    {property.contractExpiryDate && (
+                      <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+                        <Calendar className="w-3 h-3" />
+                        <span>Expires: {new Date(property.contractExpiryDate).toLocaleDateString()}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

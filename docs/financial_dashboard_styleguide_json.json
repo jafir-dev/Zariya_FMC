@@ -1,0 +1,159 @@
+{
+  "brandName": "Financial Dashboard",
+  "version": "1.0.0",
+  "colors": {
+    "primary": {
+      "coral": "#E85A4F",
+      "coralLight": "#FF6B5B",
+      "coralDark": "#D44637",
+      "coralMuted": "#F4A394"
+    },
+    "neutral": {
+      "white": "#FFFFFF",
+      "grayLightest": "#F8F9FA",
+      "grayLight": "#E9ECEF",
+      "grayMedium": "#6C757D",
+      "grayDark": "#343A40",
+      "black": "#1A1D21"
+    },
+    "semantic": {
+      "success": "#28A745",
+      "successLight": "#D4EDDA",
+      "warning": "#FFC107",
+      "warningLight": "#FFF3CD",
+      "error": "#DC3545",
+      "errorLight": "#F8D7DA",
+      "info": "#007BFF",
+      "infoLight": "#CCE7FF"
+    },
+    "gradients": {
+      "coralGradient": "linear-gradient(135deg, #E85A4F 0%, #FF6B5B 100%)",
+      "backgroundGradient": "linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 100%)"
+    }
+  },
+  "typography": {
+    "fontFamily": {
+      "primary": "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      "secondary": "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
+    },
+    "fontSize": {
+      "xs": "0.75rem",
+      "sm": "0.875rem",
+      "base": "1rem",
+      "lg": "1.125rem",
+      "xl": "1.25rem",
+      "2xl": "1.5rem",
+      "3xl": "1.875rem",
+      "4xl": "2.25rem"
+    },
+    "fontWeight": {
+      "light": 300,
+      "regular": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700
+    },
+    "lineHeight": {
+      "tight": 1.2,
+      "normal": 1.5,
+      "relaxed": 1.6
+    }
+  },
+  "spacing": {
+    "xs": "0.25rem",
+    "sm": "0.5rem",
+    "md": "1rem",
+    "lg": "1.5rem",
+    "xl": "2rem",
+    "2xl": "3rem",
+    "3xl": "4rem"
+  },
+  "borderRadius": {
+    "none": "0",
+    "sm": "0.25rem",
+    "md": "0.5rem",
+    "lg": "0.75rem",
+    "xl": "1rem",
+    "full": "9999px"
+  },
+  "shadows": {
+    "sm": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+    "md": "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+    "lg": "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+    "xl": "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+  },
+  "components": {
+    "button": {
+      "primary": {
+        "backgroundColor": "#E85A4F",
+        "color": "#FFFFFF",
+        "borderRadius": "0.75rem",
+        "padding": "0.75rem 1.5rem",
+        "fontWeight": 600,
+        "fontSize": "0.875rem",
+        "hover": {
+          "backgroundColor": "#D44637"
+        }
+      },
+      "secondary": {
+        "backgroundColor": "transparent",
+        "color": "#E85A4F",
+        "border": "1px solid #E85A4F",
+        "borderRadius": "0.75rem",
+        "padding": "0.75rem 1.5rem",
+        "fontWeight": 600,
+        "fontSize": "0.875rem",
+        "hover": {
+          "backgroundColor": "#E85A4F",
+          "color": "#FFFFFF"
+        }
+      }
+    },
+    "card": {
+      "backgroundColor": "#FFFFFF",
+      "borderRadius": "1rem",
+      "padding": "1.5rem",
+      "boxShadow": "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+      "border": "1px solid #E9ECEF"
+    },
+    "input": {
+      "backgroundColor": "#F8F9FA",
+      "border": "1px solid #E9ECEF",
+      "borderRadius": "0.5rem",
+      "padding": "0.75rem 1rem",
+      "fontSize": "0.875rem",
+      "focus": {
+        "borderColor": "#E85A4F",
+        "boxShadow": "0 0 0 3px rgba(232, 90, 79, 0.1)"
+      }
+    },
+    "progressCircle": {
+      "size": "80px",
+      "strokeWidth": "8px",
+      "backgroundColor": "#1A1D21",
+      "progressColor": "#E85A4F"
+    }
+  },
+  "layout": {
+    "container": {
+      "maxWidth": "1440px",
+      "padding": "0 2rem"
+    },
+    "grid": {
+      "columns": 12,
+      "gap": "1.5rem"
+    }
+  },
+  "animation": {
+    "duration": {
+      "fast": "0.15s",
+      "normal": "0.3s",
+      "slow": "0.5s"
+    },
+    "easing": {
+      "default": "cubic-bezier(0.4, 0, 0.2, 1)",
+      "easeIn": "cubic-bezier(0.4, 0, 1, 1)",
+      "easeOut": "cubic-bezier(0, 0, 0.2, 1)"
+    }
+  }
+}

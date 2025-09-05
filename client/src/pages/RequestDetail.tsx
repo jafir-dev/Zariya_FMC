@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import StatusBadge from "@/components/StatusBadge";
 import PriorityBadge from "@/components/PriorityBadge";
 import FileUpload from "@/components/FileUpload";
+import OTPVerification from "@/components/OTPVerification";
 import {
   Dialog,
   DialogContent,
@@ -350,6 +351,17 @@ export default function RequestDetail() {
               )}
             </CardContent>
           </Card>
+
+          {/* OTP Verification */}
+          {(request.status === 'completed' || request.status === 'closed') && (
+            <OTPVerification 
+              requestId={request.id}
+              onVerificationComplete={() => {
+                // Refresh the request data
+                queryClient.invalidateQueries({ queryKey: ["/api/maintenance-requests", id] });
+              }}
+            />
+          )}
 
           {/* Timeline */}
           <Card>

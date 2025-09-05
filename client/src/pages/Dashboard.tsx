@@ -2,6 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import TenantDashboard from "./TenantDashboard";
 import SupervisorDashboard from "./SupervisorDashboard";
 import TechnicianView from "./TechnicianView";
+import AdminDashboard from "./AdminDashboard";
 import Layout from "@/components/Layout";
 
 export default function Dashboard() {
@@ -24,6 +25,8 @@ export default function Dashboard() {
         return <SupervisorDashboard />;
       case "fmc_technician":
         return <TechnicianView />;
+      case "admin":
+        return <AdminDashboard />;
       default:
         return <TenantDashboard />;
     }

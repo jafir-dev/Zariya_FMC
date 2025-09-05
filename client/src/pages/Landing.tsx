@@ -19,6 +19,7 @@ export default function Landing() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [role, setRole] = useState('tenant');
+  const [inviteCode, setInviteCode] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -36,6 +37,7 @@ export default function Landing() {
           firstName,
           lastName,
           role,
+          inviteCode,
         });
         
         if (error) {
@@ -353,6 +355,22 @@ export default function Landing() {
                       </SelectContent>
                     </Select>
                   </div>
+                  
+                  {/* Invite Code Field - Show for tenant role */}
+                  {role === 'tenant' && (
+                    <div>
+                      <Label htmlFor="inviteCode">Invite Code (Optional)</Label>
+                      <Input
+                        id="inviteCode"
+                        placeholder="Enter invite code from your property manager"
+                        value={inviteCode}
+                        onChange={(e) => setInviteCode(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Contact your property manager if you don't have an invite code.
+                      </p>
+                    </div>
+                  )}
 
                 </>
               )}

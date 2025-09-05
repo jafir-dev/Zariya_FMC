@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Bell, Settings, ChevronDown } from "lucide-react";
+import { Bell, Settings, ChevronDown, User } from "lucide-react";
+import NotificationCenter from "./NotificationCenter";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,7 +19,7 @@ import {
 import { useLocation } from "wouter";
 
 export default function Navigation() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [, setLocation] = useLocation();
 
   const handleRoleSwitch = (view: string) => {
@@ -37,8 +38,19 @@ export default function Navigation() {
     }
   };
 
-  const handleLogout = () => {
-    window.location.href = "/api/logout";
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      setLocation("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Fallback to server-side logout
+      window.location.href = "/api/logout";
+    }
+  };
+
+  const handleProfileSettings = () => {
+    setLocation("/profile");
   };
 
   const getInitials = (firstName?: string, lastName?: string) => {
@@ -50,7 +62,7 @@ export default function Navigation() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-4">
-            <div className="flex-shrink-0 flex items-center">
+            <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => setLocation("/")}>
               <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                 <Settings className="text-sm text-primary-foreground" size={16} />
               </div>
@@ -84,15 +96,7 @@ export default function Navigation() {
 
           <div className="flex items-center space-x-4">
             {/* Notifications */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="relative"
-              data-testid="button-notifications"
-            >
-              <Bell size={20} />
-              {/* Only show notification badge if there are notifications */}
-            </Button>
+            <NotificationCenter />
 
             {/* User Menu */}
             <DropdownMenu>
@@ -110,14 +114,22 @@ export default function Navigation() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem data-testid="menu-profile">
+                <div className="px-2 py-1.5">
+                  <p className="text-sm font-medium">{user?.firstName} {user?.lastName}</p>
+                  <p className="text-xs text-muted-foreground">{user?.email}</p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleProfileSettings} data-testid="menu-profile">
+                  <User size={16} className="mr-2" />
                   Profile Settings
                 </DropdownMenuItem>
                 <DropdownMenuItem data-testid="menu-notifications">
+                  <Bell size={16} className="mr-2" />
                   Notification Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} data-testid="menu-logout">
+                  <Settings size={16} className="mr-2" />
                   Sign Out
                 </DropdownMenuItem>
               </DropdownMenuContent>

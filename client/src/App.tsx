@@ -13,6 +13,7 @@ import SupervisorDashboard from "@/pages/SupervisorDashboard";
 import TechnicianView from "@/pages/TechnicianView";
 import RequestDetail from "@/pages/RequestDetail";
 import NewRequest from "@/pages/NewRequest";
+import Profile from "@/pages/Profile";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -31,6 +32,9 @@ function Router() {
         <Route path="/" component={Landing} />
       ) : (
         <>
+          {/* Common Routes for all authenticated users */}
+          <Route path="/profile" component={Profile} />
+          
           {/* Admin Routes */}
           {user?.role === 'admin' && (
             <>

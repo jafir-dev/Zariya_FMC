@@ -3,12 +3,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import RequestCard from "@/components/RequestCard";
+import PremiseSelector from "@/components/PremiseSelector";
+import Layout from "@/components/Layout";
 import { Plus, Clock, CheckCircle, Building } from "lucide-react";
 import { useLocation } from "wouter";
+import { useState } from "react";
 
 export default function TenantDashboard() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+  const [selectedPremiseId, setSelectedPremiseId] = useState<string>("");
 
   const { data: properties = [] } = useQuery({
     queryKey: ["/api/properties"],
@@ -34,11 +38,22 @@ export default function TenantDashboard() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <Layout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Dashboard Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">My Dashboard</h1>
-        <p className="text-muted-foreground mt-2">Manage your maintenance requests and properties</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">My Dashboard</h1>
+            <p className="text-muted-foreground mt-2">Manage your maintenance requests and properties</p>
+          </div>
+          <div className="flex-shrink-0">
+            <PremiseSelector 
+              selectedPremiseId={selectedPremiseId}
+              onPremiseChange={setSelectedPremiseId}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Quick Actions */}
@@ -162,6 +177,7 @@ export default function TenantDashboard() {
           </Card>
         </div>
       </div>
-    </div>
+      </div>
+    </Layout>
   );
 }

@@ -3,28 +3,14 @@ import express from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-// Supabase authentication middleware
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-// Mock auth functions for now - will be replaced with proper Supabase auth
-const setupAuth = async (app: any) => {
-  console.log("Setting up Supabase authentication...");
-};
-
-const isAuthenticated = async (req: any, res: any, next: any) => {
-  // For now, just pass through - will implement proper Supabase auth later
-  next();
-};
-import { insertMaintenanceRequestSchema, insertAttachmentSchema, insertInviteCodeSchema, users } from "@shared/schema";
+import { auth } from './firebase';
+import { insertMaintenanceRequestSchema, insertAttachmentSchema, insertInviteCodeSchema, users, type User } from "@shared/schema";
 import { db } from './db';
 import { eq } from 'drizzle-orm';
 import multer from "multer";
 import path from "path";
 import { randomUUID } from "crypto";
+import { storage } from "./storage";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -50,24 +36,33 @@ const upload = multer({
 });
 
 interface AuthenticatedRequest extends Request {
-  user?: {
-    claims: {
-      sub: string;
-      email?: string;
-      first_name?: string;
-      last_name?: string;
-    };
-  };
+  user?: User;
 }
 
-export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware - setup conditionally
-  if (process.env.REPL_ID) {
-    const replitAuth = await import("./replitAuth");
-    await replitAuth.setupAuth(app);
-  } else {
-    console.log("Running in local development mode - skipping Replit auth setup");
+const isAuthenticated = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  const token = req.headers.authorization?.split('Bearer ')[1];
+
+  if (!token) {
+    return res.status(401).json({ message: 'Unauthorized: No token provided' });
   }
+
+  try {
+    const decodedToken = await auth.verifyIdToken(token);
+    const user = await storage.getUser(decodedToken.uid);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error('Error verifying token:', error);
+    return res.status(401).json({ message: 'Unauthorized: Invalid token' });
+  }
+};
+
+export async function registerRoutes(app: Express): Promise<Server> {
 
   // Ensure uploads directory exists
   import('fs').then(fs => {
@@ -119,33 +114,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: AuthenticatedRequest, res) => {
-    try {
-      const userId = req.user?.claims.sub;
-      if (!userId) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
+    res.json(req.user);
   });
 
   // Buildings routes
   app.get('/api/buildings', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
-      const user = await storage.getUser(req.user!.claims.sub);
-      if (!user?.tenantId) {
+      if (!req.user?.tenantId) {
         return res.status(400).json({ message: "User tenant not found" });
       }
 
-      const buildings = await storage.getBuildings(user.tenantId);
+      const buildings = await storage.getBuildings(req.user.tenantId);
       res.json(buildings);
     } catch (error) {
       console.error("Error fetching buildings:", error);
@@ -156,8 +135,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Properties routes
   app.get('/api/properties', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user!.claims.sub;
-      const properties = await storage.getPropertiesForUser(userId);
+      const properties = await storage.getPropertiesForUser(req.user!.id);
       res.json(properties);
     } catch (error) {
       console.error("Error fetching properties:", error);
@@ -168,11 +146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Maintenance requests routes
   app.post('/api/maintenance-requests', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
-      const user = await storage.getUser(req.user!.claims.sub);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
+      const user = req.user!;
       const validatedData = insertMaintenanceRequestSchema.parse({
         ...req.body,
         tenantId: user.tenantId,
@@ -198,11 +172,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/maintenance-requests', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
-      const user = await storage.getUser(req.user!.claims.sub);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
+      const user = req.user!;
       const filters: any = { tenantId: user.tenantId };
 
       // Role-based filtering
@@ -253,7 +223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/maintenance-requests/:id/status', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
       const { status } = req.body;
-      const userId = req.user!.claims.sub;
+      const userId = req.user!.id;
 
       const updated = await storage.updateMaintenanceRequestStatus(req.params.id, status, userId);
       res.json(updated);
@@ -266,7 +236,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/maintenance-requests/:id/assign', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
       const { technicianId } = req.body;
-      const supervisorId = req.user!.claims.sub;
+      const supervisorId = req.user!.id;
 
       const updated = await storage.assignTechnician(req.params.id, technicianId, supervisorId);
       res.json(updated);
@@ -280,7 +250,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/maintenance-requests/:id/attachments', isAuthenticated, upload.array('files', 10), async (req: AuthenticatedRequest, res) => {
     try {
       const files = req.files as Express.Multer.File[];
-      const userId = req.user!.claims.sub;
+      const userId = req.user!.id;
       const requestId = req.params.id;
       const isBeforePhoto = req.body.isBeforePhoto === 'true';
 
@@ -312,8 +282,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard stats routes
   app.get('/api/stats/tenant', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user!.claims.sub;
-      const stats = await storage.getTenantStats(userId);
+      const stats = await storage.getTenantStats(req.user!.id);
       res.json(stats);
     } catch (error) {
       console.error("Error fetching tenant stats:", error);
@@ -323,8 +292,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/stats/supervisor', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
-      const user = await storage.getUser(req.user!.claims.sub);
-      if (!user?.tenantId) {
+      const user = req.user!;
+      if (!user.tenantId) {
         return res.status(400).json({ message: "User tenant not found" });
       }
 
@@ -338,8 +307,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/stats/technician', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user!.claims.sub;
-      const stats = await storage.getTechnicianStats(userId);
+      const stats = await storage.getTechnicianStats(req.user!.id);
       res.json(stats);
     } catch (error) {
       console.error("Error fetching technician stats:", error);
@@ -350,8 +318,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Technicians list for assignment
   app.get('/api/technicians', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
-      const user = await storage.getUser(req.user!.claims.sub);
-      if (!user?.tenantId) {
+      const user = req.user!;
+      if (!user.tenantId) {
         return res.status(400).json({ message: "User tenant not found" });
       }
 

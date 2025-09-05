@@ -23,7 +23,17 @@
       "Bash(npx tsx:*)",
       "mcp__playwright__browser_close",
       "mcp__playwright__browser_snapshot",
-      "mcp__playwright__browser_fill_form"
+      "mcp__playwright__browser_fill_form",
+      "mcp__serena__replace_regex",
+      "mcp__serena__activate_project",
+      "mcp__serena__search_for_pattern",
+      "mcp__serena__read_file",
+      "mcp__playwright__browser_tabs",
+      "mcp__serena__find_file",
+      "mcp__serena__find_symbol",
+      "mcp__sequential-thinking__sequentialthinking",
+      "mcp__serena__list_dir",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

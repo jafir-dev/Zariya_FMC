@@ -13,12 +13,13 @@ export default function Landing() {
   const { signIn, signUp, signInWithGoogle } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [role, setRole] = useState('tenant');
-  const [inviteCode, setInviteCode] = useState('');
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -29,24 +30,20 @@ export default function Landing() {
 
     try {
       if (isSignUp) {
-        // Validate invite code for tenant role
-        if (role === 'tenant' && !inviteCode.trim()) {
-          setError('Invite code is required for tenant registration');
-          return;
-        }
+
 
         const { error } = await signUp(email, password, {
           firstName,
           lastName,
           role,
-          inviteCode: role === 'tenant' ? inviteCode : undefined,
         });
         
         if (error) {
           setError(error.message);
         } else {
           setError('');
-          alert('Account created! Please check your email to verify your account before signing in.');
+          setShowModal(false);
+          setShowSuccessPopup(true);
         }
       } else {
         const { error } = await signIn(email, password);
@@ -74,11 +71,12 @@ export default function Landing() {
       const { error } = await signInWithGoogle();
       if (error) {
         alert(error.message);
+        setIsLoading(false);
       }
+      // Note: If successful, the redirect will handle the rest and page will reload
     } catch (error) {
       console.error('Google sign-in error:', error);
       alert('Failed to connect to Google sign-in service. Please check your internet connection and try again.');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -355,19 +353,7 @@ export default function Landing() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
-                  {role === 'tenant' && (
-                    <div>
-                      <Label htmlFor="inviteCode">Invite Code</Label>
-                      <Input
-                        id="inviteCode"
-                        value={inviteCode}
-                        onChange={(e) => setInviteCode(e.target.value)}
-                        placeholder="Enter your invite code"
-                        required
-                      />
-                    </div>
-                  )}
+
                 </>
               )}
               
@@ -419,6 +405,43 @@ export default function Landing() {
           </CardContent>
         </Card>
       </div>
+      )}
+
+      {/* Success Popup */}
+      {showSuccessPopup && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={() => setShowSuccessPopup(false)}
+        >
+          <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <CardHeader className="text-center relative">
+              <button 
+                onClick={() => setShowSuccessPopup(false)}
+                className="absolute right-0 top-0 p-2 hover:bg-gray-100 rounded-full"
+                aria-label="Close popup"
+              >
+                ✕
+              </button>
+              <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <Check className="h-8 w-8 text-green-600" />
+              </div>
+              <CardTitle className="text-2xl text-green-600">
+                Account Created Successfully!
+              </CardTitle>
+              <CardDescription>
+                Please check your email to verify your account before signing in.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <Button 
+                onClick={() => setShowSuccessPopup(false)}
+                className="w-full"
+              >
+                Got it!
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Footer */}

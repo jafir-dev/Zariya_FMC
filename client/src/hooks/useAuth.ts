@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { firebaseAuth as auth, firebaseDb as db } from '@/lib/firebaseAuth';
 import type { User } from '@shared/schema';
 
@@ -17,13 +18,16 @@ export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Get initial session
+    // Get initial session and handle redirect result
     const getInitialSession = async () => {
       try {
-        const { user: authUser } = await auth.getCurrentUser();
-        if (authUser) {
-          // Get user data from our database
-          const { data: userData } = await db.getUser(authUser.id);
+        // First check for redirect result (Google Sign-in)
+        const redirectResult = await auth.handleRedirectResult();
+        
+        if (redirectResult && redirectResult.user) {
+          // Handle successful Google Sign-in redirect
+          const { data: userData } = await db.getUser(redirectResult.user.uid);
+          
           if (userData) {
             setUser({
               id: userData.id,
@@ -34,6 +38,26 @@ export function useAuth() {
               fmcOrganizationId: userData.fmcOrganizationId,
             });
             setIsAuthenticated(true);
+          }
+        } else {
+          // Check for existing session
+          const { user: authUser } = await auth.getCurrentUser();
+          
+          if (authUser) {
+            // Get user data from our database
+            const { data: userData } = await db.getUser(authUser.uid);
+            
+            if (userData) {
+              setUser({
+                id: userData.id,
+                email: userData.email || '',
+                firstName: userData.firstName,
+                lastName: userData.lastName,
+                role: userData.role,
+                fmcOrganizationId: userData.fmcOrganizationId,
+              });
+              setIsAuthenticated(true);
+            }
           }
         }
       } catch (error) {

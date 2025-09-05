@@ -2,6 +2,8 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   type User as FirebaseUser
@@ -68,28 +70,38 @@ export const firebaseAuth = {
 
   signInWithGoogle: async (): Promise<{ error?: AuthError }> => {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      
-      // Check if user profile exists, create if not
-      const response = await fetch(`/api/auth/profile/${result.user.uid}`);
-      if (!response.ok) {
-        // Create profile for new Google user
-        await fetch('/api/auth/create-profile', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            id: result.user.uid,
-            email: result.user.email,
-            firstName: result.user.displayName?.split(' ')[0] || '',
-            lastName: result.user.displayName?.split(' ').slice(1).join(' ') || '',
-            role: 'tenant',
-          }),
-        });
+      await signInWithRedirect(auth, googleProvider);
+      return {}; // Redirect will handle the rest
+    } catch (error: any) {
+      return { error: { message: error.message } };
+    }
+  },
+
+  handleRedirectResult: async (): Promise<{ user?: FirebaseUser | null, error?: AuthError }> => {
+    try {
+      const result = await getRedirectResult(auth);
+      if (result && result.user) {
+        // Check if user profile exists, create if not
+        const response = await fetch(`/api/auth/profile/${result.user.uid}`);
+        if (!response.ok) {
+          // Create profile for new Google user
+          await fetch('/api/auth/create-profile', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              id: result.user.uid,
+              email: result.user.email,
+              firstName: result.user.displayName?.split(' ')[0] || '',
+              lastName: result.user.displayName?.split(' ').slice(1).join(' ') || '',
+              role: 'tenant',
+            }),
+          });
+        }
+        return { user: result.user };
       }
-      
-      return {};
+      return { user: null };
     } catch (error: any) {
       return { error: { message: error.message } };
     }
@@ -128,6 +140,7 @@ export const firebaseDb = {
   getUser: async (userId: string) => {
     try {
       const response = await fetch(`/api/auth/profile/${userId}`);
+      
       if (!response.ok) {
         throw new Error('User not found');
       }

@@ -43,7 +43,7 @@ class NotificationService {
 
     // Initialize email service (SendGrid)
     if (process.env.SENDGRID_API_KEY) {
-      this.emailTransporter = nodemailer.createTransporter({
+      this.emailTransporter = nodemailer.createTransport({
         service: 'SendGrid',
         auth: {
           user: 'apikey',
@@ -52,7 +52,7 @@ class NotificationService {
       });
     } else if (process.env.SMTP_HOST) {
       // Fallback to SMTP
-      this.emailTransporter = nodemailer.createTransporter({
+      this.emailTransporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: parseInt(process.env.SMTP_PORT || '587'),
         secure: process.env.SMTP_SECURE === 'true',

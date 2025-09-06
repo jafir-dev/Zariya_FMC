@@ -581,4 +581,3 @@ export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 
 export type NotificationDeliveryLog = typeof notificationDeliveryLogs.$inferSelect;
 export type InsertNotificationDeliveryLog = z.infer<typeof insertNotificationDeliveryLogSchema>;
-export type InsertNotification = z.infer<typeof insertNotificationSchema>;

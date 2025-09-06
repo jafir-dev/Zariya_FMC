@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useState, useEffect } from 'react';
 import { firebaseAuth as auth, firebaseDb as db } from '@/lib/firebaseAuth';
 import type { User } from '@shared/schema';
 

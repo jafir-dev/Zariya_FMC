@@ -3,6 +3,9 @@ import TenantDashboard from "./TenantDashboard";
 import SupervisorDashboard from "./SupervisorDashboard";
 import TechnicianView from "./TechnicianView";
 import AdminDashboard from "./AdminDashboard";
+import BuildingOwnerDashboard from "./BuildingOwnerDashboard";
+import ProcurementDashboard from "./ProcurementDashboard";
+import ThirdPartyDashboard from "./ThirdPartyDashboard";
 import Layout from "@/components/Layout";
 
 export default function Dashboard() {
@@ -20,11 +23,17 @@ export default function Dashboard() {
     switch (user.role) {
       case "tenant":
         return <TenantDashboard />;
+      case "building_owner":
+        return <BuildingOwnerDashboard />;
       case "fmc_supervisor":
       case "fmc_head":
         return <SupervisorDashboard />;
       case "fmc_technician":
         return <TechnicianView />;
+      case "fmc_procurement":
+        return <ProcurementDashboard />;
+      case "third_party_support":
+        return <ThirdPartyDashboard />;
       case "admin":
         return <AdminDashboard />;
       default:

@@ -10,6 +10,8 @@ interface AuthUser {
   lastName?: string;
   role: string;
   fmcOrganizationId?: string;
+  phoneNumber?: string;
+  isProfileComplete?: boolean;
 }
 
 export function useAuth() {
@@ -29,6 +31,13 @@ export function useAuth() {
           const { data: userData } = await db.getUser(redirectResult.user.uid);
           
           if (userData) {
+            const isProfileComplete = !!(
+              userData.firstName && 
+              userData.lastName && 
+              userData.phoneNumber && 
+              userData.role
+            );
+            
             setUser({
               id: userData.id,
               email: userData.email || '',
@@ -36,6 +45,8 @@ export function useAuth() {
               lastName: userData.lastName,
               role: userData.role,
               fmcOrganizationId: userData.fmcOrganizationId,
+              phoneNumber: userData.phoneNumber,
+              isProfileComplete,
             });
             setIsAuthenticated(true);
           }
@@ -48,6 +59,13 @@ export function useAuth() {
             const { data: userData } = await db.getUser(authUser.uid);
             
             if (userData) {
+              const isProfileComplete = !!(
+                userData.firstName && 
+                userData.lastName && 
+                userData.phoneNumber && 
+                userData.role
+              );
+              
               setUser({
                 id: userData.id,
                 email: userData.email || '',
@@ -55,6 +73,8 @@ export function useAuth() {
                 lastName: userData.lastName,
                 role: userData.role,
                 fmcOrganizationId: userData.fmcOrganizationId,
+                phoneNumber: userData.phoneNumber,
+                isProfileComplete,
               });
               setIsAuthenticated(true);
             }
@@ -75,6 +95,13 @@ export function useAuth() {
         try {
           const { data: userData } = await db.getUser(session.user.id);
           if (userData) {
+            const isProfileComplete = !!(
+              userData.firstName && 
+              userData.lastName && 
+              userData.phoneNumber && 
+              userData.role
+            );
+            
             setUser({
               id: userData.id,
               email: userData.email || '',
@@ -82,6 +109,8 @@ export function useAuth() {
               lastName: userData.lastName,
               role: userData.role,
               fmcOrganizationId: userData.fmcOrganizationId,
+              phoneNumber: userData.phoneNumber,
+              isProfileComplete,
             });
             setIsAuthenticated(true);
           }

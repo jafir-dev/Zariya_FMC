@@ -17,6 +17,7 @@ import NewRequest from "@/pages/NewRequest";
 import Profile from "@/pages/Profile";
 import AdminDashboard from "@/pages/AdminDashboard";
 import ReportingDashboard from "@/pages/ReportingDashboard";
+import ProfileCompletion from "@/components/ProfileCompletion";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -26,6 +27,24 @@ function Router() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
+    );
+  }
+
+  // Handle profile completion flow
+  if (isAuthenticated && user && !user.isProfileComplete) {
+    return (
+      <ProfileCompletion
+        user={{
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        }}
+        onComplete={() => {
+          // Force refresh of user data after profile completion
+          window.location.reload();
+        }}
+      />
     );
   }
 

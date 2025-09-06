@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import cors from "cors";
 import { registerRoutes } from "./routes";
+import { contractService } from "./services/contractService";
+import { monitoringService } from "./services/monitoringService";
 import { setupVite, serveStatic, log } from "./vite";
 import { errorHandler, logError } from "./middleware/errorHandler";
 import { 
@@ -84,5 +86,13 @@ app.use((req, res, next) => {
     host: "0.0.0.0",
   }, () => {
     log(`serving on port ${port}`);
+    
+    // Initialize contract expiry monitoring
+    contractService.scheduleContractChecks();
+    log('Contract expiry monitoring initialized');
+    
+    // Initialize performance monitoring
+    monitoringService.startPeriodicMonitoring();
+    log('Performance monitoring initialized');
   });
 })();

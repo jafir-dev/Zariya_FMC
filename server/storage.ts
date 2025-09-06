@@ -33,6 +33,7 @@ export interface IStorage {
   
   // Building operations
   getBuildings(fmcOrganizationId: string): Promise<Building[]>;
+  getBuildingByName(name: string, fmcOrganizationId?: string): Promise<Building | undefined>;
   createBuilding(building: InsertBuilding): Promise<Building>;
   updateBuilding(id: string, building: Partial<InsertBuilding>): Promise<Building>;
   
@@ -140,6 +141,17 @@ export class DatabaseStorage implements IStorage {
       .from(buildings)
       .where(and(eq(buildings.fmcOrganizationId, fmcOrganizationId), eq(buildings.isActive, true)))
       .orderBy(buildings.name);
+  }
+
+  async getBuildingByName(name: string, fmcOrganizationId?: string): Promise<Building | undefined> {
+    let query = db.select().from(buildings).where(eq(buildings.name, name));
+    
+    if (fmcOrganizationId) {
+      query = query.where(and(eq(buildings.name, name), eq(buildings.fmcOrganizationId, fmcOrganizationId))) as any;
+    }
+    
+    const [building] = await query.limit(1);
+    return building;
   }
 
   async createBuilding(building: InsertBuilding): Promise<Building> {

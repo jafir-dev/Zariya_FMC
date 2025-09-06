@@ -47,23 +47,35 @@ export const onMessageListener = () => {
 // Send token to server
 export const sendTokenToServer = async (token: string, userId: string) => {
   try {
-    const response = await fetch('/api/notifications/register', {
+    const response = await fetch('/api/users/fcm-token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${await getAuthToken()}`, // You'll need to implement this
       },
-      body: JSON.stringify({ token, userId }),
+      body: JSON.stringify({ fcmToken: token }),
     });
     
     if (!response.ok) {
-      throw new Error('Failed to register token');
+      throw new Error('Failed to register FCM token');
     }
     
     return { success: true, error: null };
   } catch (error) {
-    console.error('Error sending token to server:', error);
+    console.error('Error sending FCM token to server:', error);
     return { success: false, error };
   }
+};
+
+// Get auth token helper
+const getAuthToken = async () => {
+  // This should return the current user's auth token
+  // Implementation depends on your auth system
+  const user = auth.currentUser;
+  if (user) {
+    return await user.getIdToken();
+  }
+  return null;
 };
 
 export { auth, googleProvider };

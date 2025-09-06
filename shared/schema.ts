@@ -79,6 +79,35 @@ export const fmcOrganizations = pgTable("fmc_organizations", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+// Third-party vendor organizations
+export const vendorOrganizations = pgTable("vendor_organizations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  logoUrl: varchar("logo_url"),
+  website: varchar("website"),
+  contactEmail: varchar("contact_email").notNull(),
+  contactPhone: varchar("contact_phone"),
+  address: text("address"),
+  specializations: jsonb("specializations").default("[]"), // Array of service categories
+  serviceAreas: jsonb("service_areas").default("[]"), // Geographic areas served
+  rating: decimal("rating", { precision: 2, scale: 1 }).default("0"),
+  isActive: boolean("is_active").notNull().default(true),
+  isVerified: boolean("is_verified").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+// FMC-Vendor partnerships
+export const vendorPartnerships = pgTable("vendor_partnerships", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fmcOrganizationId: varchar("fmc_organization_id").notNull().references(() => fmcOrganizations.id),
+  vendorOrganizationId: varchar("vendor_organization_id").notNull().references(() => vendorOrganizations.id),
+  serviceCategories: jsonb("service_categories").default("[]"), // What services this vendor provides for this FMC
+  contractTerms: text("contract_terms"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
 
 // Subscription tiers table
 export const subscriptionTiers = pgTable("subscription_tiers", {
@@ -111,8 +140,10 @@ export const users = pgTable("users", {
   phoneNumber: varchar("phone_number"),
   isActive: boolean("is_active").notNull().default(true),
   fmcOrganizationId: varchar("fmc_organization_id").references(() => fmcOrganizations.id),
+  vendorOrganizationId: varchar("vendor_organization_id").references(() => vendorOrganizations.id),
   stripeCustomerId: varchar("stripe_customer_id"),
   firebaseToken: varchar("firebase_token"),
+  fcmToken: varchar("fcm_token"),
   notificationPreferences: jsonb("notification_preferences").default("{}"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -168,6 +199,9 @@ export const maintenanceRequests = pgTable("maintenance_requests", {
   fmcOrganizationId: varchar("fmc_organization_id").notNull().references(() => fmcOrganizations.id),
   assignedTechnicianId: varchar("assigned_technician_id").references(() => users.id),
   supervisorId: varchar("supervisor_id").references(() => users.id),
+  assignedVendorId: varchar("assigned_vendor_id").references(() => vendorOrganizations.id),
+  vendorContactId: varchar("vendor_contact_id").references(() => users.id), // Vendor representative
+  requiresVendor: boolean("requires_vendor").notNull().default(false),
   preferredDate: timestamp("preferred_date"),
   preferredTimeSlot: varchar("preferred_time_slot"),
   schedulingNotes: text("scheduling_notes"),
@@ -230,7 +264,45 @@ export const notifications = pgTable("notifications", {
   data: jsonb("data").default("{}"),
   sentAt: timestamp("sent_at").defaultNow(),
   readAt: timestamp("read_at"),
+  deliveryStatus: jsonb("delivery_status").default("{}"),
+  deliveryAttempts: integer("delivery_attempts").default(0),
+  channelsSent: jsonb("channels_sent").default("[]"),
+  emailDeliveredAt: timestamp("email_delivered_at"),
+  smsDeliveredAt: timestamp("sms_delivered_at"),
+  whatsappDeliveredAt: timestamp("whatsapp_delivered_at"),
+  pushDeliveredAt: timestamp("push_delivered_at"),
+  externalMessageIds: jsonb("external_message_ids").default("{}"),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Notification delivery tracking table
+export const notificationDeliveryLogs = pgTable("notification_delivery_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  notificationId: varchar("notification_id").notNull().references(() => notifications.id, { onDelete: 'cascade' }),
+  channel: varchar("channel").notNull(), // 'email', 'sms', 'whatsapp', 'push'
+  provider: varchar("provider"), // 'sendgrid', 'twilio', 'firebase', etc.
+  externalMessageId: varchar("external_message_id"),
+  status: varchar("status").notNull().default("pending"), // 'pending', 'sent', 'delivered', 'failed', 'read'
+  errorMessage: text("error_message"),
+  deliveredAt: timestamp("delivered_at"),
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const qualityControlChecks = pgTable("quality_control_checks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  requestId: varchar("request_id").notNull().references(() => maintenanceRequests.id),
+  reviewedBy: varchar("reviewed_by").notNull().references(() => users.id),
+  checklistItems: jsonb("checklist_items").notNull().default("[]"),
+  overallRating: integer("overall_rating").notNull(),
+  complianceScore: integer("compliance_score").notNull(),
+  passed: boolean("passed").notNull().default(false),
+  comments: text("comments"),
+  photos: jsonb("photos").default("[]"),
+  reviewDate: timestamp("review_date").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at"),
 });
 
 // Relations
@@ -238,6 +310,22 @@ export const fmcOrganizationsRelations = relations(fmcOrganizations, ({ many }) 
   users: many(users),
   buildings: many(buildings),
   inviteCodes: many(inviteCodes),
+}));
+export const vendorOrganizationsRelations = relations(vendorOrganizations, ({ many }) => ({
+  partnerships: many(vendorPartnerships),
+  assignedRequests: many(maintenanceRequests),
+  users: many(users),
+}));
+
+export const vendorPartnershipsRelations = relations(vendorPartnerships, ({ one }) => ({
+  fmcOrganization: one(fmcOrganizations, {
+    fields: [vendorPartnerships.fmcOrganizationId],
+    references: [fmcOrganizations.id],
+  }),
+  vendorOrganization: one(vendorOrganizations, {
+    fields: [vendorPartnerships.vendorOrganizationId],
+    references: [vendorOrganizations.id],
+  }),
 }));
 
 export const subscriptionTiersRelations = relations(subscriptionTiers, ({ many }) => ({
@@ -356,9 +444,28 @@ export const inviteCodesRelations = relations(inviteCodes, ({ one }) => ({
   }),
 }));
 
-export const notificationsRelations = relations(notifications, ({ one }) => ({
+export const notificationsRelations = relations(notifications, ({ one, many }) => ({
   user: one(users, {
     fields: [notifications.userId],
+    references: [users.id],
+  }),
+  deliveryLogs: many(notificationDeliveryLogs),
+}));
+
+export const notificationDeliveryLogsRelations = relations(notificationDeliveryLogs, ({ one }) => ({
+  notification: one(notifications, {
+    fields: [notificationDeliveryLogs.notificationId],
+    references: [notifications.id],
+  }),
+}));
+
+export const qualityControlChecksRelations = relations(qualityControlChecks, ({ one }) => ({
+  request: one(maintenanceRequests, {
+    fields: [qualityControlChecks.requestId],
+    references: [maintenanceRequests.id],
+  }),
+  reviewer: one(users, {
+    fields: [qualityControlChecks.reviewedBy],
     references: [users.id],
   }),
 }));
@@ -427,8 +534,18 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   createdAt: true,
 });
 
+export const insertNotificationDeliveryLogSchema = createInsertSchema(notificationDeliveryLogs).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type FmcOrganization = typeof fmcOrganizations.$inferSelect;
+export type VendorOrganization = typeof vendorOrganizations.$inferSelect;
+export type InsertVendorOrganization = typeof vendorOrganizations.$inferInsert;
+export type VendorPartnership = typeof vendorPartnerships.$inferSelect;
+export type InsertVendorPartnership = typeof vendorPartnerships.$inferInsert;
 export type InsertFmcOrganization = z.infer<typeof insertFmcOrganizationSchema>;
 
 export type SubscriptionTier = typeof subscriptionTiers.$inferSelect;
@@ -460,4 +577,8 @@ export type InviteCode = typeof inviteCodes.$inferSelect;
 export type InsertInviteCode = z.infer<typeof insertInviteCodeSchema>;
 
 export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+
+export type NotificationDeliveryLog = typeof notificationDeliveryLogs.$inferSelect;
+export type InsertNotificationDeliveryLog = z.infer<typeof insertNotificationDeliveryLogSchema>;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
